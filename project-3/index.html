@@ -57,12 +57,6 @@ function Game(canvasId){
       this.y += this.dy;
     };
     
-    this.keepBound = function(value, bound){
-      value = Math.max(value, 0);
-      value = Math.min(value, bound);
-      return value;
-    }
-    
     this.draw = function(context){
       context.beginPath();
       context.fillStyle = this.color;
@@ -71,6 +65,140 @@ function Game(canvasId){
       context.fill();
     };
   }
+  
+  function Racket(x, size, color, boundHeight){
+    this.x = x;
+    this.y = boundHeight / 2;
+    this.dy = 0;
+    this.direction = 0;
+    this.draw = function(context){
+      context.fillStyle = color;
+      context.fillRect(this.x, this.y - size/2, 10, size);
+    };
+    this.accelate = function(dy){
+      this.dy += dy;
+    };
+    this.call = 0;
+    this.update = function(){
+      // going to zero
+      if(++this.call % 10 == 0){
+        // per 10 times becuase be slowing is too fast
+        this.dy *= 0.9;
+        this.call = 0;
+      }
+      if(Math.abs(this.dy) < 1e-10) this.dy = 0;
+      
+      this.y = this.y + (this.dy / 10);
+      if(this.y - size/2 < 0 || this.y + size/2 > boundHeight){
+        this.y = Math.max(this.y, size/2);
+        this.y = Math.min(this.y, boundHeight - size/2);
+        this.dy = 0;
+      }
+    };
+  }
+  
+  this.init = function(stageName){
+    this.stage = stageName;
+    this.balls = [];
+    this.racket1 = this.racket2 = null;
+  };
+  
+  this.state = function(stageName){
+    var width = this.context.canvas.width;
+    var height = this.context.canvas.height;
+    this.init(stageName);
+    if(stageName == 'INTRO'){
+    } else if(stageName == 'PLAY_DUO'){
+      this.racket1 = new Racket(1*width/10, height/5, '#fff', height);
+      this.racket2 = new Racket(9*width/10, height/5, '#fff', height);
+      this.pushBall(1, '#fff');
+    }
+  };
+  
+  this.draw = function(context){
+    var width = context.canvas.width;
+    var height = context.canvas.height;
+    context.clearRect(0, 0, width, height);
+    
+    for(var i in this.balls){
+      this.balls[i].draw(context);
+    }
+
+    context.font = "40px Arial";
+    context.fillStyle = "#ffffff";
+    context.textAlign = "center";
+    if( this.stage == 'INTRO'){
+      context.fillText("PING PONG", width/2, height/3);
+      context.fillText("press SPACE to start", width/2, 2*height/3);
+    } else if( this.stage == 'GAME_OVER' ){ 
+      context.fillText("GAME OVER", width/2, height/3);
+      context.fillText("press SPACE to start", width/2, 2*height/3);
+    } else if( this.stage == 'PLAY_DUO' ){
+      this.racket1.draw(context);
+      this.racket2.draw(context);
+    }
+  };
+  
+  this.fireKeydown = function(event){
+    console.log(event.code);
+    if(this.stage == 'INTRO' || this.stage == 'GAME_OVER'){
+      switch(event.code){
+      case 'Space':
+        this.state('PLAY_DUO');
+      }
+    } else if(this.stage == 'PLAY_DUO'){
+      switch(event.code){
+      case 'KeyA':
+        if(this.racket1) this.racket1.accelate(-5);
+        break;
+      case 'KeyZ':
+        if(this.racket1) this.racket1.accelate(+5);
+        break;
+      case 'KeyK':
+        if(this.racket2) this.racket2.accelate(-5);
+        break;
+      case 'KeyM':
+        if(this.racket2) this.racket2.accelate(+5);
+        break;
+      }
+    }
+  }
+  
+  this.update = function(){
+    for(var i in this.balls){
+      this.balls[i].update();
+    }
+    
+    if(this.racket1) this.racket1.update();
+    if(this.racket2) this.racket2.update();
+  }
+  
+  this.tick = function(){
+    this.update();
+    this.draw(this.context);
+  };
+  
+  ////////// Timer functions & attributes ///////////
+  this.timer = 0;
+  this.start = function(){
+    this.init('INTRO');
+    
+    for(var i=0; i<3; ++i){
+      this.pushBall(Math.floor(Math.random()*5), '#' + Math.random().toString(16).substr(2, 6));
+    }
+    
+    document.addEventListener('keydown', function(event){
+      game.fireKeydown(event);
+    }, false);
+    
+    this.timer = setInterval(function(){
+      game.tick();
+    }, 10);
+  };
+  
+  this.stop = function(){
+    clearInterval(this.timer);
+  };
   
   this.pushBall = function(ball_number, color){
     var width = this.context.canvas.width;
@@ -82,43 +210,6 @@ function Game(canvasId){
       ball.set(Math.random()*(width - ball.rad) + ball.rad, Math.random()*(height - ball.rad) + ball.rad);
       this.balls.push(ball);
     }
-  };
-  
-  this.init = function(){
-    this.balls = [];
-  };
-  
-  this.draw = function(context){
-    context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-    for(var i in this.balls){
-      this.balls[i].draw(context);
-    }
-  };
-  
-  this.update = function(){
-    for(var i in this.balls){
-      this.balls[i].update();
-    }
-  }
-  
-  this.tick = function(){
-    this.update();
-    this.draw(this.context);
-  };
-  
-  ////////// Timer functions & attributes ///////////
-  this.timer = 0;
-  this.start = function(){
-    this.init();
-    for(var i=0; i<3; ++i){
-      this.pushBall(Math.floor(Math.random()*5), '#' + Math.random().toString(16).substr(2, 6));
-    }
-    this.timer = setInterval(function(){
-      game.tick();
-    }, 10);
-  };
-  this.stop = function(){
-    clearInterval(this.timer);
   };
 }
 
