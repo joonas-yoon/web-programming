@@ -139,32 +139,31 @@ function Game(canvasId){
     }
   };
   
+  this.keypress_table = {};
   this.fireKeydown = function(event){
-    console.log(event.code);
-    if(this.stage == 'INTRO' || this.stage == 'GAME_OVER'){
+    var _this = game;
+    _this.keypress_table[event.code.toString()] = true;
+    
+    if(_this.stage == 'INTRO' || _this.stage == 'GAME_OVER'){
       switch(event.code){
       case 'Space':
-        this.state('PLAY_DUO');
-      }
-    } else if(this.stage == 'PLAY_DUO'){
-      switch(event.code){
-      case 'KeyA':
-        if(this.racket1) this.racket1.accelate(-5);
-        break;
-      case 'KeyZ':
-        if(this.racket1) this.racket1.accelate(+5);
-        break;
-      case 'KeyK':
-        if(this.racket2) this.racket2.accelate(-5);
-        break;
-      case 'KeyM':
-        if(this.racket2) this.racket2.accelate(+5);
-        break;
+        _this.state('PLAY_DUO');
       }
     }
   }
+  this.fireKeyup = function(event){
+    game.keypress_table[event.code.toString()] = false;
+  }
   
+  this.callCount = 0;
   this.update = function(){
+    if(this.stage == 'PLAY_DUO'){
+      if(this.keypress_table['KeyA']) if(this.racket1) this.racket1.accelate(-5);
+      if(this.keypress_table['KeyZ']) if(this.racket1) this.racket1.accelate(+5);
+      if(this.keypress_table['KeyK']) if(this.racket2) this.racket2.accelate(-5);
+      if(this.keypress_table['KeyM']) if(this.racket2) this.racket2.accelate(+5);
+    }
+    
     for(var i in this.balls){
       this.balls[i].update();
     }
@@ -187,9 +186,8 @@ function Game(canvasId){
       this.pushBall(Math.floor(Math.random()*5), '#' + Math.random().toString(16).substr(2, 6));
     }
     
-    document.addEventListener('keydown', function(event){
-      game.fireKeydown(event);
-    }, false);
+    document.addEventListener('keydown', game.fireKeydown);
+    document.addEventListener('keyup', game.fireKeyup);
     
     this.timer = setInterval(function(){
       game.tick();
