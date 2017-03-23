@@ -1,0 +1,129 @@
+<!doctype html>
+<html>
+<head>
+  <title>Ping! Pong!</title>
+</head>
+<style>
+  .container { padding: 2em; }
+  .center.aligned { text-align: center; }
+  canvas {
+    display: block;
+    background: #59ABE3;
+    margin: 0 auto;
+  }
+</style>
+<body>
+  <div class="center aligned container">
+    <h1 class="header">Ping! Pong!</h1>
+    <canvas id="pingpong" width="650" height="480"></canvas>
+  </div>
+</body>
+<script>
+function Game(canvasId){
+  this.game = this;
+  this.id = canvasId;
+  this.canvas = document.getElementById(this.id);
+  this.context = this.canvas.getContext('2d');
+  
+  this.width = 0;
+  this.height = 0;
+  
+  function Ball(boundWidth, boundHeight){
+    this.x = 0; this.y = 0;
+    this.dx = 5; this.dy = 5;
+    this.rad = 10;
+    this.color = "#fff";
+    
+    this.set = function(newX, newY){
+      this.x = newX;
+      this.y = newY;
+    };
+    
+    this.setD = function(_dx, _dy){
+      this.dx = _dx;
+      this.dy = _dy;
+    };
+    
+    this.update = function(){
+      var nextX = this.x + this.dx;
+      var nextY = this.y + this.dy;
+      if(nextX < this.rad || nextX > boundWidth - this.rad){
+        this.dx *= -1;
+      }
+      if(nextY < this.rad || nextY > boundHeight - this.rad){
+        this.dy *= -1;
+      }
+      this.x += this.dx;
+      this.y += this.dy;
+    };
+    
+    this.keepBound = function(value, bound){
+      value = Math.max(value, 0);
+      value = Math.min(value, bound);
+      return value;
+    }
+    
+    this.draw = function(context){
+      context.beginPath();
+      context.fillStyle = this.color;
+      context.arc(this.x, this.y, this.rad, 0, Math.PI * 2, true);
+      context.closePath();
+      context.fill();
+    };
+  }
+  
+  this.pushBall = function(ball_number, color){
+    var width = this.context.canvas.width;
+    var height = this.context.canvas.height;
+    for(var i=0; i<ball_number; ++i){
+      var ball = new Ball(width, height);
+      ball.rad = 20;
+      ball.color = color;
+      ball.set(Math.random()*(width - ball.rad) + ball.rad, Math.random()*(height - ball.rad) + ball.rad);
+      this.balls.push(ball);
+    }
+  };
+  
+  this.init = function(){
+    this.balls = [];
+  };
+  
+  this.draw = function(context){
+    context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+    for(var i in this.balls){
+      this.balls[i].draw(context);
+    }
+  };
+  
+  this.update = function(){
+    for(var i in this.balls){
+      this.balls[i].update();
+    }
+  }
+  
+  this.tick = function(){
+    this.update();
+    this.draw(this.context);
+  };
+  
+  ////////// Timer functions & attributes ///////////
+  this.timer = 0;
+  this.start = function(){
+    this.init();
+    for(var i=0; i<3; ++i){
+      this.pushBall(Math.floor(Math.random()*5), '#' + Math.random().toString(16).substr(2, 6));
+    }
+    this.timer = setInterval(function(){
+      game.tick();
+    }, 10);
+  };
+  this.stop = function(){
+    clearInterval(this.timer);
+  };
+}
+
+var game = new Game('pingpong');
+game.start();
+game.pushBall(1);
+</script>
+</html>
