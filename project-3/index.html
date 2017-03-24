@@ -48,8 +48,8 @@ function Game(canvasId){
   function Ball(boundWidth, boundHeight){
     this.x = Math.random()*(boundWidth/5) + (2*boundWidth/5);
     this.y = Math.random()*(boundHeight/2) + (boundHeight/4);
-    this.dx = Math.random() > .5 ? 1 : -1;
-    this.dy = Math.random() > .5 ? 1 : -1;
+    this.dx = Math.random() > 0.5 ? -1 : 1;
+    this.dy = Math.random() > 0.5 ? -1 : 1;
     this.rad = 10;
     this.color = "#fff";
     this.speed = 2;
@@ -65,8 +65,8 @@ function Game(canvasId){
     };
     
     this.randomDirection = function(){
-      this.dx = Math.random() > .5 ? 1 : -1;
-      this.dy = Math.random() > .5 ? 1 : -1;
+      this.dx = Math.random() > 0.5 ? -1 : 1;
+      this.dy = Math.random() > 0.5 ? -1 : 1;
     };
     
     this.update = function(){
@@ -83,17 +83,17 @@ function Game(canvasId){
     };
     
     this.draw = function(context){
+      var oldStyle = context.fillStyle;
       context.beginPath();
       context.fillStyle = this.color;
       context.arc(this.x, this.y, this.rad, 0, Math.PI * 2, true);
       context.closePath();
       context.fill();
+      context.fillStyle = oldStyle;
     };
     
     this.collide = function(racket){
       if( ! racket ) return false;
-      
-      if(++this.call % 1000) console.log(racket), this.call = 0;
       var rect= {
         left: racket.x,
         top: racket.y,
@@ -102,7 +102,11 @@ function Game(canvasId){
       };
       
       if( intersects(this, rect) ){
+        var incidencePercent = 2 * (this.y - rect.top) / rect.height;
         this.dx *= -1;
+        this.dy += incidencePercent;
+        this.dy = Math.min(this.dy, 2);
+        this.dy = Math.max(this.dy, -2);
         return true;
       } else {
         return false;
@@ -131,7 +135,7 @@ function Game(canvasId){
       // going to zero
       if(++this.call % 10 == 0){
         // per 10 times becuase be slowing is too fast
-        this.dy *= 0.9;
+        this.dy *= 0.7;
         this.call = 0;
       }
       if(Math.abs(this.dy) < 1e-10) this.dy = 0;
@@ -149,8 +153,6 @@ function Game(canvasId){
     this.stage = stageName;
     if( ! this.balls ) this.balls = [];
     this.racket1 = this.racket2 = null;
-    this.racket1_score = 0;
-    this.racket2_score = 0;
   };
   
   this.state = function(stageName){
@@ -159,11 +161,13 @@ function Game(canvasId){
     this.init(stageName);
     if(stageName == 'PLAY_SOLO' || stageName == 'PLAY_DUO'){
       this.balls = [];
+      this.racket1_score = 0;
+      this.racket2_score = 0;
       this.racket1 = new Racket(1*width/10, height/5, '#fff', height);
       this.racket2 = new Racket(9*width/10, height/5, '#fff', height);
       this.pushBall(1, '#fff');
     } else if(stageName == 'GAME_OVER'){
-      this.pushBall(Math.floor(Math.random()*10)+1, 'rgba(255,255,255,.5)');
+      this.balls = [];
     }
   };
   
@@ -201,11 +205,12 @@ function Game(canvasId){
       context.fillText(this.racket2_score, 3*width/4, height/2 + 40);
       
       context.font = "40px Comic Sans MS";
-      context.fillText("GAME OVER", width/2, height/3);
-      context.fillStyle = '#F7CA18';
-      context.fillText(this.game_result_text, width/2, height/2);
       context.fillStyle = defaultColor;
-      context.fillText("press SPACE to back", width/2, 2*height/3);
+      context.fillText("GAME OVER", width/2, height/3-60);
+      context.fillStyle = '#F7CA18';
+      context.fillText(this.game_result_text, width/2, height/3);
+      context.fillStyle = defaultColor;
+      context.fillText("press SPACE to back", width/2, 4*height/5);
     }
     else if( this.stage == 'PLAY_SOLO' || this.stage == 'PLAY_DUO' ){
       context.strokeStyle = "rgba(255, 255, 255, 0.5)";
@@ -240,6 +245,7 @@ function Game(canvasId){
     var _this = game;
     _this.keypress_table[event.code.toString()] = true;
     
+    console.log(_this.stage, event);
     if(_this.stage == 'MAIN_MENU'){
       switch(event.code){
       case 'Digit1':
@@ -289,8 +295,10 @@ function Game(canvasId){
   
   this.update = function(){
     if(this.stage == 'PLAY_SOLO' || this.stage == 'PLAY_DUO'){
-      if(this.keypress_table['KeyA']) if(this.racket1) this.racket1.accelate(-5);
-      if(this.keypress_table['KeyZ']) if(this.racket1) this.racket1.accelate(+5);
+      if(this.stage == 'PLAY_DUO'){
+        if(this.keypress_table['KeyA']) if(this.racket1) this.racket1.accelate(-5);
+        if(this.keypress_table['KeyZ']) if(this.racket1) this.racket1.accelate(+5);
+      }
       if(this.keypress_table['KeyK']) if(this.racket2) this.racket2.accelate(-5);
       if(this.keypress_table['KeyM']) if(this.racket2) this.racket2.accelate(+5);
       
@@ -307,29 +315,33 @@ function Game(canvasId){
       this.balls[i].update();
       
       if(this.racket1 && this.racket2){
-        if(this.balls[i].x < this.racket1.left - 2*this.racket2.width){
+        if(this.balls[i].x < this.racket1.left - this.racket2.width){
           this.scoring(0, +1);
           this.popAndNewBall(i);
-        } else if(this.balls[i].x > this.racket2.right + 2*this.racket2.width){
+        } else if(this.balls[i].x > this.racket2.right + this.racket2.width){
           this.scoring(+1, 0);
           this.popAndNewBall(i);
         }
       }
     }
     
-    if(this.racket1_score > 9){
-      if(this.stage == 'PLAY_SOLO')
-        this.game_result_text = 'COMPUTER WIN';
-      else
-        this.game_result_text = 'PLAYER 1 WIN';
-      return 'GAME_OVER';
-    }
-    if(this.racket2_score > 9){
-      if(this.stage == 'PLAY_SOLO')
-        this.game_result_text = 'PLAYER WIN';
-      else
-        this.game_result_text = 'PLAYER 2 WIN';
-      return 'GAME_OVER';
+    if(this.stage == 'PLAY_SOLO' || this.stage == 'PLAY_DUO'){
+      if(this.racket1_score > 9){
+        if(this.stage == 'PLAY_SOLO')
+          this.game_result_text = 'COMPUTER WIN';
+        else if(this.stage == 'PLAY_DUO')
+          this.game_result_text = 'PLAYER 1 WIN';
+
+        return 'GAME_OVER';
+      }
+      if(this.racket2_score > 9){
+        if(this.stage == 'PLAY_SOLO')
+          this.game_result_text = 'PLAYER WIN';
+        else if(this.stage == 'PLAY_DUO')
+          this.game_result_text = 'PLAYER 2 WIN';
+
+        return 'GAME_OVER';
+      }
     }
     
     if(this.racket1) this.racket1.update();
