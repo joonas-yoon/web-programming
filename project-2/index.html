@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Joonas Homepage</title>
+  <!-- Load style sheet -->
+  <link href="style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+  <div class="container">
+    <table class="calculator">
+    <tr>
+      <td colspan="2">
+        <button onclick="appendNumber(Math.floor(Math.random()*10))">random</button>
+      </td>
+      <td>
+        <button class="blue" onclick="clearResult()">AC</button>
+      </td>
+      <td>
+        <button class="blue" onclick="cancleOperate()">CE</button>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="4">
+        <input type="text" class="text disable" placeholder="" value="0" readonly disabled id="helpResult">
+      </td>
+    </tr>
+    <tr>
+      <td colspan="4">
+        <input type="text" class="text" placeholder="" value="0" readonly id="result">
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <button onclick="mathCommand('sin')">sin</button>
+      </td>
+      <td>
+        <button onclick="mathCommand('sin')">cos</button>
+      </td>
+      <td>
+        <button onclick="mathCommand('sin')">tan</button>
+      </td>
+      <td>
+        <button onclick="mathCommand('sqrt')">√</button>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <button onclick="appendNumber(7)">7</button>
+      </td>
+      <td>
+        <button onclick="appendNumber(8)">8</button>
+      </td>
+      <td>
+        <button onclick="appendNumber(9)">9</button>
+      </td>
+      <td>
+        <button onclick="selectOperator('/')">÷</button>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <button onclick="appendNumber(4)">4</button>
+      </td>
+      <td>
+        <button onclick="appendNumber(5)">5</button>
+      </td>
+      <td>
+        <button onclick="appendNumber(6)">6</button>
+      </td>
+      <td>
+        <button onclick="selectOperator('*')">×</button>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <button onclick="appendNumber(1)">1</button>
+      </td>
+      <td>
+        <button onclick="appendNumber(2)">2</button>
+      </td>
+      <td>
+        <button onclick="appendNumber(3)">3</button>
+      </td>
+      <td>
+        <button onclick="selectOperator('-')">-</button>
+      </td>
+    </tr>
+    <tr>
+        <td colspan="2">
+            <button onclick="appendNumber(0)">0</button>
+        </td>
+        <td>
+            <button class="blue" onclick="calculate()">=</button>
+        </td>
+        <td>
+            <button onclick="selectOperator('+')">+</button>
+        </td>
+    </tr>
+    </table>
+  </div>  
+</body>
+
+<script type="text/javascript">
+var number = '', operator = '', preResult = '';
+var result = document.getElementById("result");
+var helpResult = document.getElementById("helpResult");
+
+function appendNumber(num){
+  if(operator != ''){
+    preResult = refreshResult();
+    number = num;
+  } else {
+    number = number +''+ (number == 0 && num == 0 ? '' : num);
+  }
+  selectOperator('');
+}
+
+function selectOperator(ch){
+  operator = ch;
+  helpResult.value = '';
+  refreshResult();
+}
+
+function clearResult(){
+  initCalculator();
+  refreshResult();
+}
+
+function calculate(){
+  try {
+    var evr = eval(result.value);
+    result.value = evr;
+    initCalculator();
+    number = evr;
+  } catch(e){
+    result.value = 'Error';
+  }
+}
+
+function cancleOperate(){
+  helpResult.value = operator = '';
+  refreshResult();
+}
+
+function refreshResult(){
+  return result.value = preResult +''+ (number != '' ? number : 0) +''+ operator;
+}
+
+function mathCommand(cmd){
+  helpResult.value = preResult + cmd + '(' + (number != '' ? number : 0) +')'+ operator;
+  if(cmd == 'sin'){
+    number = Math.sin(number);
+  }
+  else if(cmd == 'cos'){
+    number = Math.cos(number);
+  }
+  else if(cmd == 'tan'){
+    number = Math.tan(number);
+  }
+  else if(cmd == 'sqrt'){
+    number = Math.sqrt(number);
+  }
+  refreshResult();
+}
+
+function initCalculator(){
+  number = operator = preResult = '';
+  helpResult.value = '';
+}
+</script>
+
+</html>

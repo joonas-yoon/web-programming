@@ -1,0 +1,105 @@
+* {
+  overflow: auto;
+  box-sizing: border-box;
+  font-size: 16pt;
+}
+
+html, body {
+  background: #fefefe; 
+  color: #00000;
+  font-family: 'MalgunGothic', Helvetica;
+  margin: 0; 
+  padding: 0;
+}
+
+a[href],
+a[href]:focus,
+a[href]:active,
+a[href]:hover {
+  display: inline-block;
+  text-decoration: none;
+}
+
+a{color: #005bac;}
+a:focus, a:active, a:hover{color: #003674;}
+
+.container {
+  margin: 0;
+  padding: 40px 120px;
+}
+
+table.calculator {
+  margin: 30px auto;
+}
+
+button {
+  cursor: pointer;
+  display: inline-block;
+  min-height: 1em;
+  outline: 0;
+  border: 1px solid #ccc;
+  vertical-align: baseline;
+  background: #ffffff none;
+  color: rgba(0,0,0,.6);
+  font-family: Lato,'Helvetica Neue',Arial,Helvetica,sans-serif;
+  margin: 0 auto;
+  padding: .78571429em 1.5em .78571429em;
+  text-transform: none;
+  text-shadow: none;
+  font-weight: 700;
+  line-height: 1em;
+  font-style: normal;
+  text-align: center;
+  text-decoration: none;
+  border-radius: .28571429rem;
+  box-shadow: 0 0 0 1px transparent inset, 0 0 0 0 rgba(34,36,38,.15) inset;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-transition: opacity .1s ease,background-color .1s ease,color .1s ease,box-shadow .1s ease,background .1s ease;
+  transition: opacity .1s ease,background-color .1s ease,color .1s ease,box-shadow .1s ease,background .1s ease;
+  will-change: '';
+  -webkit-tap-highlight-color: transparent;
+}
+button:active { position:relative; top:1px; }
+button:focus {outline:0;}
+
+table button { width: 100%; }
+table button:hover {
+  background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #f6f6f6), color-stop(1, #ffffff));
+  background:-moz-linear-gradient(top, #f6f6f6 5%, #ffffff 100%);
+  background:-webkit-linear-gradient(top, #f6f6f6 5%, #ffffff 100%);
+  background:-o-linear-gradient(top, #f6f6f6 5%, #ffffff 100%);
+  background:-ms-linear-gradient(top, #f6f6f6 5%, #ffffff 100%);
+  background:linear-gradient(to bottom, #f6f6f6 5%, #ffffff 100%);
+  filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#f6f6f6', endColorstr='#ffffff',GradientType=0);
+  background-color:#f6f6f6;
+}
+
+button.blue, button.blue:focus, button.blue:hover, button.blue:active {
+  color: #fff;
+  text-shadow: none;
+  background-image: none;
+}
+button.blue { background-color: #2185d0 !important; }
+button.blue:focus { background-color: #1678c2 !important; }
+button.blue:active { background-color: #1a69a4 !important; }
+
+table.calculator input.text {
+  text-align: right;
+  padding: 5px 10px;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  font-family: Lato,'Helvetica Neue',Arial,Helvetica,sans-serif;
+  font-size: 20px;
+  border-radius: 5px;
+  width: 100%;
+}
+
+table.calculator input.disable {
+  color: #afafaf;
+  background-color: #eee;
+}
+
+table.calculator input.text:focus {outline: 0;}
