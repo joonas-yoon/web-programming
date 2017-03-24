@@ -64,6 +64,11 @@ function Game(canvasId){
       this.dy = _dy;
     };
     
+    this.randomDirection = function(){
+      this.dx = Math.random() > .5 ? 1 : -1;
+      this.dy = Math.random() > .5 ? 1 : -1;
+    };
+    
     this.update = function(){
       var nextX = this.x + this.dx;
       var nextY = this.y + this.dy;
@@ -142,7 +147,7 @@ function Game(canvasId){
   
   this.init = function(stageName){
     this.stage = stageName;
-    this.balls = [];
+    if( ! this.balls ) this.balls = [];
     this.racket1 = this.racket2 = null;
     this.racket1_score = 0;
     this.racket2_score = 0;
@@ -152,11 +157,13 @@ function Game(canvasId){
     var width = this.context.canvas.width;
     var height = this.context.canvas.height;
     this.init(stageName);
-    if(stageName == 'INTRO'){
-    } else if(stageName == 'PLAY_DUO'){
+    if(stageName == 'PLAY_SOLO' || stageName == 'PLAY_DUO'){
+      this.balls = [];
       this.racket1 = new Racket(1*width/10, height/5, '#fff', height);
       this.racket2 = new Racket(9*width/10, height/5, '#fff', height);
       this.pushBall(1, '#fff');
+    } else if(stageName == 'GAME_OVER'){
+      this.pushBall(Math.floor(Math.random()*10)+1, 'rgba(255,255,255,.5)');
     }
   };
   
@@ -168,17 +175,39 @@ function Game(canvasId){
     for(var i in this.balls){
       this.balls[i].draw(context);
     }
+    
+    var defaultColor = '#FFFFFF';
 
-    context.font = "40px Arial";
-    context.fillStyle = "#ffffff";
+    context.font = "40px Comic Sans MS";
+    context.fillStyle = defaultColor;
     context.textAlign = "center";
-    if( this.stage == 'INTRO'){
-      context.fillText("PING PONG", width/2, height/3);
-      context.fillText("press SPACE to start", width/2, 2*height/3);
-    } else if( this.stage == 'GAME_OVER' ){ 
+    if( this.stage == 'MAIN_MENU'){
+      context.fillText("PING PONG", width/2, height/4);
+      context.fillText("1. play with computer", width/2, 2*height/4);
+      context.fillText("2. play with 2 player", width/2, 3*height/4);
+    }
+    else if( this.stage == 'SELECT_COMPUTER'){
+      context.fillText("COMPUTER LEVEL", width/2, height/6);
+      context.fillText("1. easy", width/2, 2*height/6);
+      context.fillText("2. medium", width/2, 3*height/6);
+      context.fillText("3. hard", width/2, 4*height/6);
+      context.fillText("ESC. back", width/2, 5*height/6);
+    }
+    else if( this.stage == 'GAME_OVER' ){ 
+      context.fillStyle = "rgba(255, 255, 255, 0.5)";
+      context.textAlign = "center";
+      context.font = "100px Comic Sans MS";
+      context.fillText(this.racket1_score, width/4, height/2 + 40);
+      context.fillText(this.racket2_score, 3*width/4, height/2 + 40);
+      
+      context.font = "40px Comic Sans MS";
       context.fillText("GAME OVER", width/2, height/3);
-      context.fillText("press SPACE to start", width/2, 2*height/3);
-    } else if( this.stage == 'PLAY_DUO' ){
+      context.fillStyle = '#F7CA18';
+      context.fillText(this.game_result_text, width/2, height/2);
+      context.fillStyle = defaultColor;
+      context.fillText("press SPACE to back", width/2, 2*height/3);
+    }
+    else if( this.stage == 'PLAY_SOLO' || this.stage == 'PLAY_DUO' ){
       context.strokeStyle = "rgba(255, 255, 255, 0.5)";
       context.beginPath();
       context.moveTo(width/2, 0);
@@ -186,9 +215,20 @@ function Game(canvasId){
       context.stroke();
       context.closePath();
       
-      context.fillStyle = "#ffffff";
+      context.fillStyle = "rgba(255, 255, 255, 0.5)";
       context.textAlign = "center";
-      context.fillText(this.racket1_score + " : " + this.racket2_score, width/2, 50);
+      context.font = "100px Comic Sans MS";
+      context.fillText(this.racket1_score, width/4, height/2 + 40);
+      context.fillText(this.racket2_score, 3*width/4, height/2 + 40);
+      context.font = "40px Comic Sans MS";
+      var hud = {
+        'PLAY_SOLO': ['COM', 'YOU'],
+        'PLAY_DUO' : ['PLAYER1', 'PLAYER2']
+      };
+      for(var i in hud){
+        context.fillText(hud[this.stage][0], 1*width/4, height/4 + 40);
+        context.fillText(hud[this.stage][1], 3*width/4, height/4 + 40);
+      }
       
       this.racket1.draw(context);
       this.racket2.draw(context);
@@ -200,10 +240,46 @@ function Game(canvasId){
     var _this = game;
     _this.keypress_table[event.code.toString()] = true;
     
-    if(_this.stage == 'INTRO' || _this.stage == 'GAME_OVER'){
+    if(_this.stage == 'MAIN_MENU'){
+      switch(event.code){
+      case 'Digit1':
+        _this.state('SELECT_COMPUTER');
+        break;
+      case 'Numpad1':
+        _this.state('SELECT_COMPUTER');
+        break;
+      case 'Digit2':
+        _this.state('PLAY_DUO');
+        break;
+      case 'Numpad2':
+        _this.state('PLAY_DUO');
+        break;
+      }
+    }
+    else if(_this.stage == 'GAME_OVER'){
       switch(event.code){
       case 'Space':
-        _this.state('PLAY_DUO');
+        _this.state('MAIN_MENU');
+        break;
+      }
+    }
+    else if(_this.stage == 'SELECT_COMPUTER'){
+      switch(event.key){
+      case '1':
+        _this.computer_level = 1;
+        _this.state('PLAY_SOLO');
+        break;
+      case '2':
+        _this.computer_level = 2;
+        _this.state('PLAY_SOLO');
+        break;
+      case '3':
+        _this.computer_level = 3;
+        _this.state('PLAY_SOLO');
+        break;
+      case 'Escape':
+        _this.state('MAIN_MENU');
+        break;
       }
     }
   }
@@ -212,11 +288,17 @@ function Game(canvasId){
   }
   
   this.update = function(){
-    if(this.stage == 'PLAY_DUO'){
+    if(this.stage == 'PLAY_SOLO' || this.stage == 'PLAY_DUO'){
       if(this.keypress_table['KeyA']) if(this.racket1) this.racket1.accelate(-5);
       if(this.keypress_table['KeyZ']) if(this.racket1) this.racket1.accelate(+5);
       if(this.keypress_table['KeyK']) if(this.racket2) this.racket2.accelate(-5);
       if(this.keypress_table['KeyM']) if(this.racket2) this.racket2.accelate(+5);
+      
+      if(this.stage == 'PLAY_SOLO' && this.racket1){
+        var accuracy = parseInt(this.computer_level || 1)-1;
+        var isDiffrentPosition = this.balls && this.racket1.y != this.balls[0];
+        if(Math.random() < [0.15, 0.3, 0.5][accuracy] && isDiffrentPosition) this.racket1.accelate(5 * (this.balls[0].y < this.racket1.y ? -1 : 1));
+      }
     }
     
     for(var i in this.balls){
@@ -235,8 +317,20 @@ function Game(canvasId){
       }
     }
     
-    if(this.racket1_score > 9) return 'GAME_OVER';
-    if(this.racket2_score > 9) return 'GAME_OVER';
+    if(this.racket1_score > 9){
+      if(this.stage == 'PLAY_SOLO')
+        this.game_result_text = 'COMPUTER WIN';
+      else
+        this.game_result_text = 'PLAYER 1 WIN';
+      return 'GAME_OVER';
+    }
+    if(this.racket2_score > 9){
+      if(this.stage == 'PLAY_SOLO')
+        this.game_result_text = 'PLAYER WIN';
+      else
+        this.game_result_text = 'PLAYER 2 WIN';
+      return 'GAME_OVER';
+    }
     
     if(this.racket1) this.racket1.update();
     if(this.racket2) this.racket2.update();
@@ -253,9 +347,9 @@ function Game(canvasId){
   ////////// Timer functions & attributes ///////////
   this.timer = 0;
   this.start = function(){
-    this.init('INTRO');
+    this.init('MAIN_MENU');
     
-    for(var i=0; i<3; ++i){
+    for(var i=0; i<5; ++i){
       this.pushBall(Math.floor(Math.random()*5), '#' + Math.random().toString(16).substr(2, 6));
     }
     
@@ -271,7 +365,8 @@ function Game(canvasId){
     clearInterval(this.timer);
   };
   
-  this.pushBall = function(ball_number, color){
+  this.pushBall = function(ball_number, color, delay){
+    if( ! delay ) delay = 0;
     var width = this.context.canvas.width;
     var height = this.context.canvas.height;
     for(var i=0; i<ball_number; ++i){
@@ -279,13 +374,20 @@ function Game(canvasId){
       ball.rad = 12;
       ball.color = color;
       ball.speed = 4;
+      if( delay ){
+        ball.setD(0, 0);
+        // 1초 뒤에 움직이도록 한다.
+        setTimeout(function(){
+          ball.randomDirection();
+        }, delay);
+      }
       this.balls.push(ball);
     }
   };
   
   this.popAndNewBall = function(ball_index){
     this.balls = [];
-    this.pushBall(1, '#fff');
+    this.pushBall(1, '#fff', 1000);
   };
   
   this.scoring = function(score1, score2){
