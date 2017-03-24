@@ -11,10 +11,31 @@
     background: #59ABE3;
     margin: 0 auto;
   }
+  a.key {
+    border: 1px solid #ccc;
+    padding: 0 5px;
+    display: inline-block;
+    margin: 3px 2px;
+    background: #e3e3e3;
+    border-radius: 4px;
+  }
 </style>
 <body>
   <div class="center aligned container">
     <h1 class="header">Ping! Pong!</h1>
+    <p>
+      <b>Usage</b><br>
+      <br>
+      Single Play<br>
+      PLAYER 1 : Up(<a class="key">K</a>) / Down(<a class="key">M</a>)<br>
+      <br>
+      Two-Player<br>
+      PLAYER 1 : Up(<a class="key">A</a>) / Down(<a class="key">Z</a>)<br>
+      PLAYER 2 : Up(<a class="key">K</a>) / Down(<a class="key">M</a>)<br>
+      <br>
+      Menu<br>
+      Number Keys and Escape(<a class="key">ESC</a>), Space bar(<a class="key">Space</a>)
+    </p>
     <canvas id="pingpong" width="650" height="480"></canvas>
   </div>
 </body>
