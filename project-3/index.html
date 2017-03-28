@@ -23,6 +23,7 @@
 <body>
   <div class="center aligned container">
     <h1 class="header">Ping! Pong!</h1>
+    <canvas id="pingpong" width="650" height="480"></canvas>
     <p>
       <b>Usage</b><br>
       <br>
@@ -36,7 +37,6 @@
       Menu<br>
       Number Keys and Escape(<a class="key">ESC</a>), Space bar(<a class="key">Space</a>)
     </p>
-    <canvas id="pingpong" width="650" height="480"></canvas>
   </div>
 </body>
 <script>
@@ -48,6 +48,21 @@ function Game(canvasId){
   
   this.width = 0;
   this.height = 0;
+  
+  setTimeout(function(){
+    // document loaded
+    document.addEventListener('keydown', this.game.fireKeydown);
+    document.addEventListener('keyup', this.game.fireKeyup);
+  }, 50);
+  
+  this.timer = setInterval(function(){
+    game.tick();
+  }, 10);
+  
+  // block spacebar to page down
+  window.onkeydown = function(e) { 
+    return !(e.keyCode == 32);
+  };
   
   function intersects(circle, rect){
       var circleDistance = {};
@@ -265,8 +280,7 @@ function Game(canvasId){
   this.fireKeydown = function(event){
     var _this = game;
     _this.keypress_table[event.code.toString()] = true;
-    
-    console.log(_this.stage, event);
+
     if(_this.stage == 'MAIN_MENU'){
       switch(event.code){
       case 'Digit1':
@@ -287,6 +301,7 @@ function Game(canvasId){
       switch(event.code){
       case 'Space':
         _this.state('MAIN_MENU');
+        _this.start();
         break;
       }
     }
@@ -326,7 +341,13 @@ function Game(canvasId){
       if(this.stage == 'PLAY_SOLO' && this.racket1){
         var accuracy = parseInt(this.computer_level || 1)-1;
         var isDiffrentPosition = this.balls && this.racket1.y != this.balls[0];
-        if(Math.random() < [0.15, 0.3, 0.5][accuracy] && isDiffrentPosition) this.racket1.accelate(5 * (this.balls[0].y < this.racket1.y ? -1 : 1));
+        if(Math.random() < [0.3, 0.5, 0.9][accuracy] && isDiffrentPosition) this.racket1.accelate(5 * (this.balls[0].y < this.racket1.y ? -1 : 1));
+        
+        var tickSometime = Math.random() < 0.1;
+        if(tickSometime){
+          if(this.racket1.y <= this.racket1.height/2 + 10) this.racket1.accelate(+40), console.log(this.racket1.y);
+          if(this.racket1.y >= this.context.canvas.height - this.racket1.height/2 - 10) this.racket1.accelate(-40), console.log(this.racket1.y);
+        }
       }
     }
     
@@ -385,13 +406,6 @@ function Game(canvasId){
     for(var i=0; i<5; ++i){
       this.pushBall(Math.floor(Math.random()*5), '#' + Math.random().toString(16).substr(2, 6));
     }
-    
-    document.addEventListener('keydown', game.fireKeydown);
-    document.addEventListener('keyup', game.fireKeyup);
-    
-    this.timer = setInterval(function(){
-      game.tick();
-    }, 10);
   };
   
   this.stop = function(){
