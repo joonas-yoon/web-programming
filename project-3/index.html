@@ -345,8 +345,8 @@ function Game(canvasId){
         
         var tickSometime = Math.random() < 0.1;
         if(tickSometime){
-          if(this.racket1.y <= this.racket1.height/2 + 10) this.racket1.accelate(+40), console.log(this.racket1.y);
-          if(this.racket1.y >= this.context.canvas.height - this.racket1.height/2 - 10) this.racket1.accelate(-40), console.log(this.racket1.y);
+          if(this.racket1.y <= this.racket1.height/2 + 10) this.racket1.accelate(+40);
+          if(this.racket1.y >= this.context.canvas.height - this.racket1.height/2 - 10) this.racket1.accelate(-40);
         }
       }
     }
@@ -395,7 +395,7 @@ function Game(canvasId){
     if( this.update() == 'GAME_OVER' ){
       this.state('GAME_OVER');
     }
-    this.draw(this.context);
+    this.draw(this.context);  
   };
   
   ////////// Timer functions & attributes ///////////
