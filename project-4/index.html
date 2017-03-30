@@ -8,22 +8,28 @@
   <div class="container">
     <nav class="left menu">
       <label>Brush Size</label>
-      <input type="number" class="input-control fluid" value="3" onchange="setSize(this)"/>
+      <input type="number" class="input-control fluid" value="10" onchange="setSize(this)"/>
       
       <hr>
       
       <label>Change Color</label>
-      <input type="color"  class="input-control fluid" value="#000000" onchange="changeColor(this)"/>
+      <input type="color" class="input-control fluid" value="#000000" onchange="changeColor(this.value)" style="height: 30px"/>
       
+      <button class="color-sample" style="background:#CF000F" onclick="changeColor('#CF000F')">MONZA</button>
+      <button class="color-sample" style="background:#22A7F0" onclick="changeColor('#22A7F0')">PICTON BLUE</button>
+      <button class="color-sample" style="background:#F7CA18" onclick="changeColor('#F7CA18')">RIPE LEMON</button>
+      <button class="color-sample" style="background:#26C281" onclick="changeColor('#26C281')">JUNGLE GREEN</button>
+      <button class="color-sample" style="background:#FFFFFF" onclick="changeColor('#FFFFFF')">WHITE</button>
       <hr>
       
       <input type="button" class="input-control fluid" value="clear" onclick="clearCanvas()"/>
     </nav>
     <div class="wrapper">
-      <canvas id="cover"  width="640" height="480"></canvas>
-      <canvas id="canvas" width="640" height="480"></canvas>
+      <canvas id="cover"  width="860" height="640"></canvas>
+      <canvas id="canvas" width="860" height="640"></canvas>
     </div>
   </div>
+  <p> &nbsp;<b>Note:</b> type="color" is not supported in Internet Explorer 11 and earlier versions or Safari 9.1 and earlier versions.</p>
 </body>
 <script type="text/javascript">
 
@@ -45,12 +51,12 @@ var painting = false;
 var pointQueue = new Array();
 var brush = {
   color: '#000000',
-  thick: 5
+  thick: 10
 };
 
 var cachedImage = realContext.getImageData(0, 0, 1, 1);
 
-realCanvas.addEventListener('mousedown', function(evt){
+fakeCanvas.addEventListener('mousedown', function(evt){
   var mouseX = evt.pageX - this.offsetLeft;
   var mouseY = evt.pageY - this.offsetTop;
   pointQueue.push({x: mouseX, y: mouseY, dragging: false});
@@ -59,16 +65,30 @@ realCanvas.addEventListener('mousedown', function(evt){
   realContext.clearRect(0, 0, realContext.canvas.width, realContext.canvas.height); // Clears the canvas
   realContext.putImageData(cachedImage || {}, 0, 0);
 
-  realCanvas.addEventListener('mousemove', addDrawPoint);
+  fakeCanvas.addEventListener('mousemove', addDrawPoint);
 
   draw();
 });
 
-realCanvas.addEventListener('mouseup', looseFocus);
-realCanvas.addEventListener('mouseleave', looseFocus);
+fakeCanvas.addEventListener('mouseup', looseFocus);
+fakeCanvas.addEventListener('mouseleave', looseFocus);
+fakeCanvas.addEventListener('mousemove', function(evt){
+  var mouseX = evt.pageX - this.offsetLeft;
+  var mouseY = evt.pageY - this.offsetTop;
+  fakeContext.clearRect(0, 0, fakeContext.canvas.width, fakeContext.canvas.height);
+  fakeContext.beginPath();
+  fakeContext.arc(mouseX, mouseY, brush.thick/2, 0, 2*Math.PI);
+  fakeContext.fillStyle = brush.color;
+  fakeContext.fill();
+  if(brush.color == '#FFFFFF'){
+    fakeContext.strokeStyle = 'rgba(0, 0, 0, .25)';
+    fakeContext.stroke();
+  }
+  fakeContext.closePath();
+});
 
 function draw(){
-  realContext.strokeStyle = brush.color || "#df4b26";
+  realContext.strokeStyle = brush.color;
   realContext.lineJoin = "round";
   realContext.lineWidth = brush.thick;
 
@@ -110,7 +130,7 @@ function clearCanvas(){
 }
 
 function changeColor(input){
-  brush.color = input.value;
+  brush.color = input;
 }
 function setSize(input){
   brush.thick = input.value;
