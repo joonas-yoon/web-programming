@@ -1,0 +1,34 @@
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+canvas {
+  border: 5px solid #ccc;
+  width: 640px;
+  height: 480px;
+  cursor: pointer;
+  position: relative;
+  z-index: 10;
+}
+canvas#cover {
+  position: absolute;
+  background: transparent;
+  z-index: 1 !important;
+}
+nav {
+  float: left;
+  max-width: 300px;
+  width: 100%;
+  margin: 0;
+  padding: 1em;
+}
+.input-control {
+  display: block;
+}
+.input-control.fluid {
+  width: 100%;
+}
+.wrapper {
+  margin-left: 320px;
+  border-left: 1px solid gray;
+  padding: 1em;
+  overflow: hidden;
+}

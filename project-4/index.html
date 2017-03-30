@@ -1,0 +1,120 @@
+<!doctype html>
+<html>
+<head>
+  <title>Paint</title>
+  <link href="style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+  <div class="container">
+    <nav class="left menu">
+      <label>Brush Size</label>
+      <input type="number" class="input-control fluid" value="3" onchange="setSize(this)"/>
+      
+      <hr>
+      
+      <label>Change Color</label>
+      <input type="color"  class="input-control fluid" value="#000000" onchange="changeColor(this)"/>
+      
+      <hr>
+      
+      <input type="button" class="input-control fluid" value="clear" onclick="clearCanvas()"/>
+    </nav>
+    <div class="wrapper">
+      <canvas id="cover"  width="640" height="480"></canvas>
+      <canvas id="canvas" width="640" height="480"></canvas>
+    </div>
+  </div>
+</body>
+<script type="text/javascript">
+
+// 실제 그림이 그려지는 캔버스
+var realCanvas = document.getElementById('canvas');
+var realContext = realCanvas.getContext('2d');
+// 인터페이스를 위한 임시 캔버스
+var fakeCanvas = document.getElementById('cover');
+var fakeContext = fakeCanvas.getContext('2d');
+
+function Point(x, y, rad){
+  this.x = x;
+  this.y = y;
+  this.rad = rad;
+  this.color = '#000000';
+};
+
+var painting = false;
+var pointQueue = new Array();
+var brush = {
+  color: '#000000',
+  thick: 5
+};
+
+var cachedImage = realContext.getImageData(0, 0, 1, 1);
+
+realCanvas.addEventListener('mousedown', function(evt){
+  var mouseX = evt.pageX - this.offsetLeft;
+  var mouseY = evt.pageY - this.offsetTop;
+  pointQueue.push({x: mouseX, y: mouseY, dragging: false});
+  painting = true;
+  
+  realContext.clearRect(0, 0, realContext.canvas.width, realContext.canvas.height); // Clears the canvas
+  realContext.putImageData(cachedImage || {}, 0, 0);
+
+  realCanvas.addEventListener('mousemove', addDrawPoint);
+
+  draw();
+});
+
+realCanvas.addEventListener('mouseup', looseFocus);
+realCanvas.addEventListener('mouseleave', looseFocus);
+
+function draw(){
+  realContext.strokeStyle = brush.color || "#df4b26";
+  realContext.lineJoin = "round";
+  realContext.lineWidth = brush.thick;
+
+  for(var i=0; i < pointQueue.length; ++i){
+    realContext.beginPath();
+    if( i-1 >= 0 && pointQueue[i].dragging ){
+      realContext.moveTo(pointQueue[i-1].x, pointQueue[i-1].y);
+    } else {
+      realContext.moveTo(pointQueue[i].x-1, pointQueue[i].y);
+    }
+    realContext.lineTo(pointQueue[i].x, pointQueue[i].y);
+    realContext.closePath();
+    realContext.stroke();
+  }
+}
+
+function addDrawPoint(evt){
+  if( painting ){
+    var mouseX = evt.pageX - this.offsetLeft;
+    var mouseY = evt.pageY - this.offsetTop;
+    pointQueue.push({x: mouseX, y: mouseY, dragging: true});
+    draw();
+  }
+}
+
+function looseFocus(){
+  painting = false;
+  
+  cachedImage = realContext.getImageData(0, 0, realContext.canvas.width, realContext.canvas.height);
+  pointQueue = [];
+  
+  realCanvas.removeEventListener('mousemove', addDrawPoint);
+}
+
+function clearCanvas(){
+  pointQueue = [];
+  realContext.clearRect(0, 0, realContext.canvas.width, realContext.canvas.height);
+  cachedImage = realContext.getImageData(0, 0, 1, 1);
+}
+
+function changeColor(input){
+  brush.color = input.value;
+}
+function setSize(input){
+  brush.thick = input.value;
+}
+
+</script>
+</html>
