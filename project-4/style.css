@@ -48,3 +48,16 @@ button.color-sample {
   height:30px;
   margin-top: 5px;
 }
+
+.button-group .icon.button {
+  display: inline-block;
+  width: 30px;
+  height: 30px;
+}
+.button-group .icon.button img {
+  max-width: 30px;
+  width: 100%;
+}
+.button-group {
+  margin-top: 5px;
+}

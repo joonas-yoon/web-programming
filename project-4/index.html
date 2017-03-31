@@ -2,7 +2,8 @@
 <html>
 <head>
   <title>Paint</title>
-  <link href="style.css" rel="stylesheet" type="text/css">
+  <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+  <link href="./style.css" rel="stylesheet" type="text/css">
 </head>
 <body>
   <div class="container">
@@ -13,7 +14,7 @@
       <hr>
       
       <label>Change Color</label>
-      <input type="color" class="input-control fluid" value="#000000" onchange="changeColor(this.value)" style="height: 30px"/>
+      <input type="color" class="input-control fluid" value="#000000" onchange="changeColor(this.value)" id="colorPicker" style="height: 30px"/>
       
       <button class="color-sample" style="background:#CF000F" onclick="changeColor('#CF000F')">MONZA</button>
       <button class="color-sample" style="background:#22A7F0" onclick="changeColor('#22A7F0')">PICTON BLUE</button>
@@ -23,6 +24,16 @@
       <hr>
       
       <input type="button" class="input-control fluid" value="clear" onclick="clearCanvas()"/>
+      
+      <div class="button-group">
+        <button class="icon button" onclick="javascript:setShape('brush')"><img src="icons/brush.png"></button>
+        <button class="icon button" onclick="javascript:setShape('colorPicker')"><img src="icons/picker.png"></button>
+        <button class="icon button" onclick="javascript:setShape('rectangle')"><img src="icons/rectangle.png"></button>
+        <button class="icon button" onclick="javascript:setShape('line')"><img src="icons/line.png"></button>
+      </div>
+      
+      <p></p>
+      
     </nav>
     <div class="wrapper">
       <canvas id="cover"  width="860" height="640"></canvas>
@@ -72,11 +83,6 @@ fakeCanvas.addEventListener('mousedown', function(evt){
   realContext.putImageData(cachedImage, 0, 0);
 
   fakeCanvas.addEventListener('mousemove', addDrawPoint);
-  
-  if( drawType == 'colorPicker' ){
-    var img_data = realContext.getImageData(lastClickPosition.x, lastClickPosition.y, 1, 1).data;
-    console.log(rgbToHex(img_data[0], img_data[1], img_data[2]));
-  }
 
   draw();
 });
@@ -86,20 +92,44 @@ fakeCanvas.addEventListener('mouseleave', looseFocus);
 fakeCanvas.addEventListener('mousemove', function(evt){
   var mouseX = evt.pageX - this.offsetLeft;
   var mouseY = evt.pageY - this.offsetTop;
+  var oldStrokeStyle = fakeContext.strokeStyle;
   fakeContext.clearRect(0, 0, fakeContext.canvas.width, fakeContext.canvas.height);
   fakeContext.beginPath();
-  if( drawType == 'brush' ){
+  if( drawType == 'brush' ) {
     fakeContext.arc(mouseX, mouseY, brush.thick/2, 0, 2*Math.PI);
+    fakeContext.fillStyle = brush.color;
     if(brush.color == '#FFFFFF'){
       fakeContext.strokeStyle = 'rgba(0, 0, 0, .25)';
       fakeContext.stroke();
     }
-  } else if( drawType == 'rectangle' && dragging ){
+  } else if( drawType == 'rectangle' && dragging ) {
     fakeContext.fillRect(lastClickPosition.x, lastClickPosition.y, mouseX - lastClickPosition.x, mouseY - lastClickPosition.y);
+    fakeContext.fillStyle = brush.color;
+  } else if( drawType == 'line' && dragging ){
+    fakeContext.arc(lastClickPosition.x, lastClickPosition.y, brush.thick/2, 0, 2.0 * Math.PI, 0);
+    fakeContext.arc(mouseX, mouseY, brush.thick/2, 0, 2.0 * Math.PI, 0);
+    fakeContext.fillStyle = brush.color;
+    fakeContext.fill();
+    fakeContext.beginPath();
+    fakeContext.moveTo(lastClickPosition.x, lastClickPosition.y);
+    fakeContext.lineTo(mouseX, mouseY);
+    fakeContext.strokeStyle = brush.color;
+    fakeContext.stroke();
+  } else if( drawType == 'colorPicker' ) {
+    var img_data = realContext.getImageData(mouseX, mouseY, 1, 1).data;
+    brush.decetedColor = '#'+rgbToHex(img_data[0], img_data[1], img_data[2]);
+    
+    fakeContext.beginPath();
+    fakeContext.strokeStyle = 'rgba(255, 255, 255, .5)';
+    fakeContext.lineWidth = 12;
+    fakeContext.fillStyle = brush.decetedColor;
+    fakeContext.arc(mouseX, mouseY, 20, 0, 2.0 * Math.PI, 0);
+    fakeContext.stroke();
   }
-  fakeContext.fillStyle = brush.color;
   fakeContext.fill();
   fakeContext.closePath();
+  fakeContext.strokeStyle = oldStrokeStyle;
+  fakeContext.lineWidth = brush.thick;
 });
 
 function draw(shape, startPosition, endPosition){
@@ -107,10 +137,8 @@ function draw(shape, startPosition, endPosition){
   realContext.fillStyle = brush.color;
   realContext.lineJoin = "round";
   realContext.lineWidth = brush.thick;
-  
-  
-  if( !shape || shape == 'brush' )
-  {
+
+  if( !shape || shape == 'brush' ) {
     for(var i=0; i < pointQueue.length; ++i){
       realContext.beginPath();
       if( i-1 >= 0 && pointQueue[i].dragging ){
@@ -153,6 +181,10 @@ function looseFocus(evt){
   };
   
   if(evt.type != 'mouseleave') draw(drawType, lastClickPosition, loosedPosition);
+
+  if(drawType == 'colorPicker'){
+    changeColor(brush.decetedColor);
+  }
   
   cachedImage = realContext.getImageData(0, 0, realContext.canvas.width, realContext.canvas.height);
   pointQueue = [];
@@ -170,9 +202,13 @@ function clearCanvas(){
 
 function changeColor(input){
   brush.color = input;
+  document.getElementById('colorPicker').value = input;
 }
 function setSize(input){
   brush.thick = input.value;
+}
+function setShape(shape){
+  drawType = shape;
 }
 
 function rgbToHex(R,G,B) {return toHex(R)+toHex(G)+toHex(B)}
