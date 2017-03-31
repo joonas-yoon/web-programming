@@ -83,8 +83,6 @@ fakeCanvas.addEventListener('mousedown', function(evt){
   realContext.putImageData(cachedImage, 0, 0);
 
   fakeCanvas.addEventListener('mousemove', addDrawPoint);
-
-  draw();
 });
 
 fakeCanvas.addEventListener('mouseup', looseFocus);
@@ -116,13 +114,17 @@ fakeCanvas.addEventListener('mousemove', function(evt){
     fakeContext.strokeStyle = brush.color;
     fakeContext.stroke();
   } else if( drawType == 'colorPicker' ) {
-    var img_data = realContext.getImageData(mouseX, mouseY, 1, 1).data;
-    brush.decetedColor = '#'+rgbToHex(img_data[0], img_data[1], img_data[2]);
-    
     fakeContext.beginPath();
     fakeContext.strokeStyle = 'rgba(255, 255, 255, .5)';
     fakeContext.lineWidth = 12;
-    fakeContext.fillStyle = brush.decetedColor;
+    if(dragging){
+      var img_data = realContext.getImageData(mouseX, mouseY, 1, 1).data;
+      var decetedColor = '#'+rgbToHex(img_data[0], img_data[1], img_data[2]);
+      fakeContext.fillStyle = decetedColor;
+      changeColor(decetedColor);
+    } else {
+      fakeContext.fillStyle = 'transparent';
+    }
     fakeContext.arc(mouseX, mouseY, 20, 0, 2.0 * Math.PI, 0);
     fakeContext.stroke();
   }
@@ -157,6 +159,15 @@ function draw(shape, startPosition, endPosition){
     realContext.fill();
     realContext.closePath();
   }
+  else if( shape == 'line' ) {
+    realContext.arc(startPosition.x, startPosition.y, brush.thick/2, 0, 2.0 * Math.PI, 0);
+    realContext.arc(endPosition.x, endPosition.y, brush.thick/2, 0, 2.0 * Math.PI, 0);
+    realContext.beginPath();
+    realContext.moveTo(startPosition.x, startPosition.y);
+    realContext.lineTo(endPosition.x, endPosition.y);
+    realContext.closePath();
+    realContext.stroke();
+  }
 }
 
 function addDrawPoint(evt){
@@ -167,8 +178,6 @@ function addDrawPoint(evt){
       pointQueue.push({x: mouseX, y: mouseY, dragging: true});
       draw();
     }
-  } else if( drawType == 'rectangle' ){
-    
   }
 }
 
@@ -180,10 +189,8 @@ function looseFocus(evt){
     y: evt.pageY - this.offsetTop
   };
   
-  if(evt.type != 'mouseleave') draw(drawType, lastClickPosition, loosedPosition);
-
-  if(drawType == 'colorPicker'){
-    changeColor(brush.decetedColor);
+  if(evt.type != 'mouseleave'){
+    draw(drawType, lastClickPosition, loosedPosition);
   }
   
   cachedImage = realContext.getImageData(0, 0, realContext.canvas.width, realContext.canvas.height);
