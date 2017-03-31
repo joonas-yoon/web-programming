@@ -29,8 +29,13 @@
       <div class="button-group">
         <button class="icon button" onclick="javascript:setShape('brush')"><img src="icons/brush.png"></button>
         <button class="icon button" onclick="javascript:setShape('colorPicker')"><img src="icons/picker.png"></button>
-        <button class="icon button" onclick="javascript:setShape('rectangle')"><img src="icons/rectangle.png"></button>
         <button class="icon button" onclick="javascript:setShape('line')"><img src="icons/line.png"></button>
+        <button class="icon button" onclick="javascript:setShape('rectangle')"><img src="icons/rectangle.png"></button>
+        <button class="icon button" onclick="javascript:setShape('rectangle-filled')"><img src="icons/rectangle_filled.png"></button>
+        <button class="icon button" onclick="javascript:setShape('triangle')"><img src="icons/triangle.png"></button>
+        <button class="icon button" onclick="javascript:setShape('triangle-filled')"><img src="icons/triangle_filled.png"></button>
+        <button class="icon button" onclick="javascript:setShape('circle')"><img src="icons/circle.png"></button>
+        <button class="icon button" onclick="javascript:setShape('circle-filled')"><img src="icons/circle_filled.png"></button>
       </div>
       
       <p></p>
@@ -110,6 +115,67 @@ fakeCanvas.addEventListener('mousemove', function(evt){
     fakeContext.strokeStyle = brush.color;
     fakeContext.stroke();
     fakeContext.closePath();
+  } else if( drawType == 'rectangle-filled' && dragging ) {
+    fakeContext.beginPath();
+    fakeContext.fillStyle = brush.color;
+    fakeContext.fillRect(lastClickPosition.x, lastClickPosition.y, mouseX - lastClickPosition.x, mouseY - lastClickPosition.y);
+    fakeContext.fill();
+    fakeContext.closePath();
+  } else if( drawType.substr(0, 'circle'.length) == 'circle' && dragging ) {
+    var isOnlyStroke = drawType === 'circle';
+    var centerX = lastClickPosition.x;
+    var centerY = lastClickPosition.y;
+    function distance(width, height){
+      return Math.sqrt(width*width + height*height);
+    };
+    fakeContext.beginPath();
+    if(isOnlyStroke) fakeContext.strokeStyle = brush.color;
+    else             fakeContext.fillStyle = brush.color;
+    fakeContext.arc(lastClickPosition.x, lastClickPosition.y, distance(mouseX - centerX, mouseY - centerY), 0, 2 * Math.PI);
+    if(isOnlyStroke) fakeContext.stroke();
+    else             fakeContext.fill();
+    fakeContext.closePath();
+    
+    fakeContext.beginPath();
+    if(isOnlyStroke) fakeContext.strokeStyle = brush.color;
+    else             fakeContext.strokeStyle = 'rgba(255, 255, 255, .5)';
+    fakeContext.arc(centerX, centerY, brush.thick/2, 0, 2 * Math.PI);
+    fakeContext.fillStyle = brush.color;
+    fakeContext.fill();
+    fakeContext.closePath();
+    fakeContext.beginPath();
+    fakeContext.moveTo(centerX, centerY);
+    fakeContext.lineTo(mouseX, mouseY);
+    // fakeContext.stroke();
+    fakeContext.closePath();
+  } else if( drawType.substr(0, 'triangle'.length) == 'triangle' && dragging ) {
+    var triWidth = mouseX - lastClickPosition.x;
+    var isOnlyStroke = drawType === 'triangle';
+    var threePoint = [
+      {x:lastClickPosition.x + triWidth/2, y:lastClickPosition.y},
+      {x:mouseX, y:mouseY},
+      {x:mouseX - triWidth, y:mouseY}
+    ];
+    fakeContext.beginPath();
+    if(isOnlyStroke) fakeContext.strokeStyle = brush.color;
+    else             fakeContext.fillStyle = brush.color;
+    fakeContext.moveTo(threePoint[0].x, threePoint[0].y);
+    fakeContext.lineTo(threePoint[1].x, threePoint[1].y);
+    fakeContext.lineTo(threePoint[2].x, threePoint[2].y);
+    fakeContext.lineTo(threePoint[0].x, threePoint[0].y);
+    if(isOnlyStroke) fakeContext.stroke();
+    else             fakeContext.fill();
+    fakeContext.closePath();
+    
+    if(isOnlyStroke){
+      fakeContext.fillStyle = brush.color;
+      for(var i in threePoint){
+        fakeContext.beginPath();
+        fakeContext.arc(threePoint[i].x, threePoint[i].y, brush.thick/2, 0, 2*Math.PI);
+        fakeContext.fill();
+        fakeContext.closePath();
+      }
+    }
   } else if( drawType == 'line' ){
     fakeContext.beginPath();
     if( dragging ){
@@ -175,6 +241,55 @@ function draw(shape, startPosition, endPosition){
     realContext.rect(startPosition.x, startPosition.y, endPosition.x - startPosition.x, endPosition.y - startPosition.y);
     realContext.stroke();
     realContext.closePath();
+  }
+  else if( shape == 'rectangle-filled' ) {
+    realContext.beginPath();
+    realContext.fillRect(startPosition.x, startPosition.y, endPosition.x - startPosition.x, endPosition.y - startPosition.y);
+    realContext.fill();
+    realContext.closePath();
+  }
+  else if( drawType.substr(0, 'circle'.length) == 'circle' ) {
+    var isOnlyStroke = drawType === 'circle';
+    var centerX = startPosition.x;
+    var centerY = startPosition.y;
+    function distance(width, height){
+      return Math.sqrt(width*width + height*height);
+    };
+    realContext.beginPath();
+    if(isOnlyStroke) realContext.strokeStyle = brush.color;
+    else             realContext.fillStyle = brush.color;
+    realContext.arc(startPosition.x, startPosition.y, distance(endPosition.x - centerX, endPosition.y - centerY), 0, 2 * Math.PI);
+    if(isOnlyStroke) realContext.stroke();
+    else             realContext.fill();
+    realContext.closePath();
+  }
+  else if( drawType.substr(0, 'triangle'.length) == 'triangle' ) {
+    var triWidth = endPosition.x - startPosition.x;
+    var isOnlyStroke = drawType === 'triangle';
+    var threePoint = [
+      {x:startPosition.x + triWidth/2, y:startPosition.y},
+      {x:endPosition.x, y:endPosition.y},
+      {x:endPosition.x - triWidth, y:endPosition.y}
+    ];
+    realContext.beginPath();
+    if(isOnlyStroke) realContext.strokeStyle = brush.color;
+    else             realContext.fillStyle = brush.color;
+    realContext.moveTo(threePoint[0].x, threePoint[0].y);
+    realContext.lineTo(threePoint[1].x, threePoint[1].y);
+    realContext.lineTo(threePoint[2].x, threePoint[2].y);
+    realContext.lineTo(threePoint[0].x, threePoint[0].y);
+    if(isOnlyStroke) realContext.stroke();
+    else             realContext.fill();
+    realContext.closePath();
+    
+    if(isOnlyStroke){
+      for(var i in threePoint){
+        realContext.beginPath();
+        realContext.arc(threePoint[i].x, threePoint[i].y, brush.thick/2, 0, 2*Math.PI);
+        realContext.fill();
+        realContext.closePath();
+      }
+    }
   }
   else if( shape == 'line' ) {
     realContext.arc(startPosition.x, startPosition.y, brush.thick/2, 0, 2.0 * Math.PI, 0);
