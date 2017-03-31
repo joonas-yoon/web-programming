@@ -47,25 +47,36 @@ function Point(x, y, rad){
   this.color = '#000000';
 };
 
-var painting = false;
+var dragging = false;
 var pointQueue = new Array();
 var brush = {
   color: '#000000',
-  thick: 10
+  thick: 10,
+  opacity: 1.0
 };
+var drawType = 'brush';
+var lastClickPosition = { x:0, y:0 };
 
 var cachedImage = realContext.getImageData(0, 0, 1, 1);
 
 fakeCanvas.addEventListener('mousedown', function(evt){
-  var mouseX = evt.pageX - this.offsetLeft;
-  var mouseY = evt.pageY - this.offsetTop;
-  pointQueue.push({x: mouseX, y: mouseY, dragging: false});
-  painting = true;
+  lastClickPosition.x = evt.pageX - this.offsetLeft;
+  lastClickPosition.y = evt.pageY - this.offsetTop;
+  
+  if( drawType == 'brush' ){
+    pointQueue.push({x: lastClickPosition.x, y: lastClickPosition.y, dragging: false});
+  }
+  dragging = true;
   
   realContext.clearRect(0, 0, realContext.canvas.width, realContext.canvas.height); // Clears the canvas
-  realContext.putImageData(cachedImage || {}, 0, 0);
+  realContext.putImageData(cachedImage, 0, 0);
 
   fakeCanvas.addEventListener('mousemove', addDrawPoint);
+  
+  if( drawType == 'colorPicker' ){
+    var img_data = realContext.getImageData(lastClickPosition.x, lastClickPosition.y, 1, 1).data;
+    console.log(rgbToHex(img_data[0], img_data[1], img_data[2]));
+  }
 
   draw();
 });
@@ -77,55 +88,83 @@ fakeCanvas.addEventListener('mousemove', function(evt){
   var mouseY = evt.pageY - this.offsetTop;
   fakeContext.clearRect(0, 0, fakeContext.canvas.width, fakeContext.canvas.height);
   fakeContext.beginPath();
-  fakeContext.arc(mouseX, mouseY, brush.thick/2, 0, 2*Math.PI);
+  if( drawType == 'brush' ){
+    fakeContext.arc(mouseX, mouseY, brush.thick/2, 0, 2*Math.PI);
+    if(brush.color == '#FFFFFF'){
+      fakeContext.strokeStyle = 'rgba(0, 0, 0, .25)';
+      fakeContext.stroke();
+    }
+  } else if( drawType == 'rectangle' && dragging ){
+    fakeContext.fillRect(lastClickPosition.x, lastClickPosition.y, mouseX - lastClickPosition.x, mouseY - lastClickPosition.y);
+  }
   fakeContext.fillStyle = brush.color;
   fakeContext.fill();
-  if(brush.color == '#FFFFFF'){
-    fakeContext.strokeStyle = 'rgba(0, 0, 0, .25)';
-    fakeContext.stroke();
-  }
   fakeContext.closePath();
 });
 
-function draw(){
+function draw(shape, startPosition, endPosition){
   realContext.strokeStyle = brush.color;
+  realContext.fillStyle = brush.color;
   realContext.lineJoin = "round";
   realContext.lineWidth = brush.thick;
-
-  for(var i=0; i < pointQueue.length; ++i){
-    realContext.beginPath();
-    if( i-1 >= 0 && pointQueue[i].dragging ){
-      realContext.moveTo(pointQueue[i-1].x, pointQueue[i-1].y);
-    } else {
-      realContext.moveTo(pointQueue[i].x-1, pointQueue[i].y);
+  
+  
+  if( !shape || shape == 'brush' )
+  {
+    for(var i=0; i < pointQueue.length; ++i){
+      realContext.beginPath();
+      if( i-1 >= 0 && pointQueue[i].dragging ){
+        realContext.moveTo(pointQueue[i-1].x, pointQueue[i-1].y);
+      } else {
+        realContext.moveTo(pointQueue[i].x-1, pointQueue[i].y);
+      }
+      realContext.lineTo(pointQueue[i].x, pointQueue[i].y);
+      realContext.closePath();
+      realContext.stroke();
     }
-    realContext.lineTo(pointQueue[i].x, pointQueue[i].y);
+  }
+  else if( shape == 'rectangle' ) {
+    realContext.beginPath();
+    realContext.fillRect(startPosition.x, startPosition.y, endPosition.x - startPosition.x, endPosition.y - startPosition.y);
+    realContext.fill();
     realContext.closePath();
-    realContext.stroke();
   }
 }
 
 function addDrawPoint(evt){
-  if( painting ){
-    var mouseX = evt.pageX - this.offsetLeft;
-    var mouseY = evt.pageY - this.offsetTop;
-    pointQueue.push({x: mouseX, y: mouseY, dragging: true});
-    draw();
+  if( drawType == 'brush' ){
+    if( dragging ){
+      var mouseX = evt.pageX - this.offsetLeft;
+      var mouseY = evt.pageY - this.offsetTop;
+      pointQueue.push({x: mouseX, y: mouseY, dragging: true});
+      draw();
+    }
+  } else if( drawType == 'rectangle' ){
+    
   }
 }
 
-function looseFocus(){
-  painting = false;
+function looseFocus(evt){
+  dragging = false;
+  
+  var loosedPosition = {
+    x: evt.pageX - this.offsetLeft,
+    y: evt.pageY - this.offsetTop
+  };
+  
+  if(evt.type != 'mouseleave') draw(drawType, lastClickPosition, loosedPosition);
   
   cachedImage = realContext.getImageData(0, 0, realContext.canvas.width, realContext.canvas.height);
   pointQueue = [];
   
   realCanvas.removeEventListener('mousemove', addDrawPoint);
+  fakeContext.clearRect(0, 0, fakeContext.canvas.width, fakeContext.canvas.height);
 }
 
 function clearCanvas(){
   pointQueue = [];
   realContext.clearRect(0, 0, realContext.canvas.width, realContext.canvas.height);
+  fakeContext.clearRect(0, 0, fakeContext.canvas.width, fakeContext.canvas.height);
   cachedImage = realContext.getImageData(0, 0, 1, 1);
 }
 
@@ -136,5 +175,13 @@ function setSize(input){
   brush.thick = input.value;
 }
 
+function rgbToHex(R,G,B) {return toHex(R)+toHex(G)+toHex(B)}
+function toHex(n) {
+  n = parseInt(n,10);
+  if (isNaN(n)) return "00";
+  n = Math.max(0,Math.min(n,255));
+  return "0123456789ABCDEF".charAt((n-n%16)/16)  + "0123456789ABCDEF".charAt(n%16);
+}
+	
 </script>
 </html>
