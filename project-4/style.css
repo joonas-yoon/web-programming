@@ -24,11 +24,14 @@ nav {
   display: block;
   margin: 0 auto;
 }
-.input-control.fluid {
+.fluid {
+  display: block;
   width: 100%;
 }
-input[type=text], input[type=number], input[type=submit], input[type=button] {
+input[type=text], input[type=number] {
   padding: 10px 20px;
+}
+input[type=text], input[type=number], input[type=submit], input[type=button] {
   font-size: 12pt;
 }
 input[type=button], input[type=submit], button {
@@ -42,17 +45,11 @@ input[type=button], input[type=submit], button {
   padding: 1em;
   overflow: hidden;
 }
-button.color-sample {
-  display: block;
-  width:100%;
-  height:30px;
-  margin-top: 5px;
-}
 
 .button-group .icon.button {
   display: inline-block;
-  width: 30px;
-  height: 30px;
+  width: 40px;
+  height: 40px;
 }
 .button-group .icon.button img {
   max-width: 30px;
@@ -60,4 +57,28 @@ button.color-sample {
 }
 .button-group {
   margin-top: 5px;
+}
+.button {
+  background: #eee;
+  border: 1px solid #ccc;
+  border-bottom-width: 3px;
+  margin-top: 5px;
+  padding: 10px;
+}
+.button:after, .button:before {
+  content: '';
+}
+.button:active {
+  border-bottom-width: 1px;
+  margin-top: 7px;
+}
+.icon.button {
+  padding: 3px !important;
+}
+.button-group .button {
+  float: left;
+  margin-right: 7px;
+}
+.button-group:after {
+  clear: both;
 }

@@ -16,14 +16,15 @@
       <label>Change Color</label>
       <input type="color" class="input-control fluid" value="#000000" onchange="changeColor(this.value)" id="colorPicker" style="height: 30px"/>
       
-      <button class="color-sample" style="background:#CF000F" onclick="changeColor('#CF000F')">MONZA</button>
-      <button class="color-sample" style="background:#22A7F0" onclick="changeColor('#22A7F0')">PICTON BLUE</button>
-      <button class="color-sample" style="background:#F7CA18" onclick="changeColor('#F7CA18')">RIPE LEMON</button>
-      <button class="color-sample" style="background:#26C281" onclick="changeColor('#26C281')">JUNGLE GREEN</button>
-      <button class="color-sample" style="background:#FFFFFF" onclick="changeColor('#FFFFFF')">WHITE</button>
+      <button class="fluid color-sample button" style="background:#CF000F" onclick="changeColor('#CF000F')">MONZA</button>
+      <button class="fluid color-sample button" style="background:#22A7F0" onclick="changeColor('#22A7F0')">PICTON BLUE</button>
+      <button class="fluid color-sample button" style="background:#F7CA18" onclick="changeColor('#F7CA18')">RIPE LEMON</button>
+      <button class="fluid color-sample button" style="background:#26C281" onclick="changeColor('#26C281')">JUNGLE GREEN</button>
+      <button class="fluid color-sample button" style="background:#FFFFFF" onclick="changeColor('#FFFFFF')">WHITE</button>
       <hr>
       
-      <input type="button" class="input-control fluid" value="clear" onclick="clearCanvas()"/>
+      <input type="button" class="default button fluid" value="clear" onclick="clearCanvas()"/>
+      <input type="button" class="default button fluid" value="to PNG" onclick="exportImageToPng()"/>
       
       <div class="button-group">
         <button class="icon button" onclick="javascript:setShape('brush')"><img src="icons/brush.png"></button>
@@ -91,46 +92,62 @@ fakeCanvas.addEventListener('mousemove', function(evt){
   var mouseX = evt.pageX - this.offsetLeft;
   var mouseY = evt.pageY - this.offsetTop;
   var oldStrokeStyle = fakeContext.strokeStyle;
+  var oldFillStyle = fakeContext.fillStyle;
   fakeContext.clearRect(0, 0, fakeContext.canvas.width, fakeContext.canvas.height);
-  fakeContext.beginPath();
   if( drawType == 'brush' ) {
+    fakeContext.beginPath();
     fakeContext.arc(mouseX, mouseY, brush.thick/2, 0, 2*Math.PI);
     fakeContext.fillStyle = brush.color;
     if(brush.color == '#FFFFFF'){
       fakeContext.strokeStyle = 'rgba(0, 0, 0, .25)';
       fakeContext.stroke();
     }
-  } else if( drawType == 'rectangle' && dragging ) {
-    fakeContext.fillRect(lastClickPosition.x, lastClickPosition.y, mouseX - lastClickPosition.x, mouseY - lastClickPosition.y);
-    fakeContext.fillStyle = brush.color;
-  } else if( drawType == 'line' && dragging ){
-    fakeContext.arc(lastClickPosition.x, lastClickPosition.y, brush.thick/2, 0, 2.0 * Math.PI, 0);
-    fakeContext.arc(mouseX, mouseY, brush.thick/2, 0, 2.0 * Math.PI, 0);
-    fakeContext.fillStyle = brush.color;
     fakeContext.fill();
+    fakeContext.closePath();
+  } else if( drawType == 'rectangle' && dragging ) {
     fakeContext.beginPath();
-    fakeContext.moveTo(lastClickPosition.x, lastClickPosition.y);
-    fakeContext.lineTo(mouseX, mouseY);
+    fakeContext.rect(lastClickPosition.x, lastClickPosition.y, mouseX - lastClickPosition.x, mouseY - lastClickPosition.y);
     fakeContext.strokeStyle = brush.color;
     fakeContext.stroke();
+    fakeContext.closePath();
+  } else if( drawType == 'line' ){
+    fakeContext.beginPath();
+    if( dragging ){
+      fakeContext.arc(lastClickPosition.x, lastClickPosition.y, brush.thick/2, 0, 2.0 * Math.PI, 0);
+      fakeContext.arc(mouseX, mouseY, brush.thick/2, 0, 2.0 * Math.PI, 0);
+      fakeContext.fillStyle = brush.color;
+      fakeContext.fill();
+      fakeContext.closePath();
+      
+      fakeContext.beginPath();
+      fakeContext.moveTo(lastClickPosition.x, lastClickPosition.y);
+      fakeContext.lineTo(mouseX, mouseY);
+      fakeContext.strokeStyle = brush.color;
+      fakeContext.stroke();
+    } else {
+      fakeContext.arc(mouseX, mouseY, brush.thick/2, 0, 2.0 * Math.PI, 0);
+      
+      fakeContext.fillStyle = brush.color;
+      fakeContext.fill();
+    }
+    fakeContext.closePath();
   } else if( drawType == 'colorPicker' ) {
     fakeContext.beginPath();
     fakeContext.strokeStyle = 'rgba(255, 255, 255, .5)';
     fakeContext.lineWidth = 12;
+    fakeContext.arc(mouseX, mouseY, 20, 0, 2.0 * Math.PI, 0);
+    fakeContext.stroke();
     if(dragging){
       var img_data = realContext.getImageData(mouseX, mouseY, 1, 1).data;
       var decetedColor = '#'+rgbToHex(img_data[0], img_data[1], img_data[2]);
       fakeContext.fillStyle = decetedColor;
+      fakeContext.fill();
       changeColor(decetedColor);
-    } else {
-      fakeContext.fillStyle = 'transparent';
     }
-    fakeContext.arc(mouseX, mouseY, 20, 0, 2.0 * Math.PI, 0);
-    fakeContext.stroke();
+    fakeContext.closePath();
   }
-  fakeContext.fill();
-  fakeContext.closePath();
   fakeContext.strokeStyle = oldStrokeStyle;
+  fakeContext.fillStyle = oldFillStyle;
   fakeContext.lineWidth = brush.thick;
 });
 
@@ -155,8 +172,8 @@ function draw(shape, startPosition, endPosition){
   }
   else if( shape == 'rectangle' ) {
     realContext.beginPath();
-    realContext.fillRect(startPosition.x, startPosition.y, endPosition.x - startPosition.x, endPosition.y - startPosition.y);
-    realContext.fill();
+    realContext.rect(startPosition.x, startPosition.y, endPosition.x - startPosition.x, endPosition.y - startPosition.y);
+    realContext.stroke();
     realContext.closePath();
   }
   else if( shape == 'line' ) {
@@ -225,6 +242,11 @@ function toHex(n) {
   n = Math.max(0,Math.min(n,255));
   return "0123456789ABCDEF".charAt((n-n%16)/16)  + "0123456789ABCDEF".charAt(n%16);
 }
-	
+
+function exportImageToPng() {
+  var d = realCanvas.toDataURL("image/png");
+  var w = window.open('about:blank','image from canvas');
+  w.document.write("<img src='"+d+"' alt='from canvas'/>");
+}
 </script>
 </html>
