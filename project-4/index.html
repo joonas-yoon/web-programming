@@ -31,22 +31,22 @@
       <input type="button" class="default button fluid" value="to PNG" onclick="exportImageToPng()"/>
       
       <div class="button-group">
-        <button class="icon button" onclick="javascript:setShape('brush')"><img src="icons/brush.png"></button>
-        <button class="icon button" onclick="javascript:setShape('colorPicker')"><img src="icons/picker.png"></button>
-        <button class="icon button" onclick="javascript:setShape('brush-bubble')"><img src="icons/brush_bubble.png"></button>
-        <button class="icon button" onclick="javascript:setShape('line')"><img src="icons/line.png"></button>
-        <button class="icon button" onclick="javascript:setShape('triangle')"><img src="icons/triangle.png"></button>
-        <button class="icon button" onclick="javascript:setShape('triangle-filled')"><img src="icons/triangle_filled.png"></button>
-        <button class="icon button" onclick="javascript:setShape('rectangle')"><img src="icons/rectangle.png"></button>
-        <button class="icon button" onclick="javascript:setShape('rectangle-filled')"><img src="icons/rectangle_filled.png"></button>
-        <button class="icon button" onclick="javascript:setShape('pentagon')"><img src="icons/pentagon.png"></button>
-        <button class="icon button" onclick="javascript:setShape('pentagon-filled')"><img src="icons/pentagon_filled.png"></button>
-        <button class="icon button" onclick="javascript:setShape('hexagon')"><img src="icons/hexagon.png"></button>
-        <button class="icon button" onclick="javascript:setShape('hexagon-filled')"><img src="icons/hexagon_filled.png"></button>
-        <button class="icon button" onclick="javascript:setShape('octagon')"><img src="icons/octagon.png"></button>
-        <button class="icon button" onclick="javascript:setShape('octagon-filled')"><img src="icons/octagon_filled.png"></button>
-        <button class="icon button" onclick="javascript:setShape('circle')"><img src="icons/circle.png"></button>
-        <button class="icon button" onclick="javascript:setShape('circle-filled')"><img src="icons/circle_filled.png"></button>
+        <button class="icon button active" data-shape="brush"><img src="icons/brush.png"></button>
+        <button class="icon button" data-shape="colorPicker"><img src="icons/picker.png"></button>
+        <button class="icon button" data-shape="brush-bubble"><img src="icons/brush_bubble.png"></button>
+        <button class="icon button" data-shape="line"><img src="icons/line.png"></button>
+        <button class="icon button" data-shape="triangle"><img src="icons/triangle.png"></button>
+        <button class="icon button" data-shape="triangle-filled"><img src="icons/triangle_filled.png"></button>
+        <button class="icon button" data-shape="rectangle"><img src="icons/rectangle.png"></button>
+        <button class="icon button" data-shape="rectangle-filled"><img src="icons/rectangle_filled.png"></button>
+        <button class="icon button" data-shape="pentagon"><img src="icons/pentagon.png"></button>
+        <button class="icon button" data-shape="pentagon-filled"><img src="icons/pentagon_filled.png"></button>
+        <button class="icon button" data-shape="hexagon"><img src="icons/hexagon.png"></button>
+        <button class="icon button" data-shape="hexagon-filled"><img src="icons/hexagon_filled.png"></button>
+        <button class="icon button" data-shape="octagon"><img src="icons/octagon.png"></button>
+        <button class="icon button" data-shape="octagon-filled"><img src="icons/octagon_filled.png"></button>
+        <button class="icon button" data-shape="circle"><img src="icons/circle.png"></button>
+        <button class="icon button" data-shape="circle-filled"><img src="icons/circle_filled.png"></button>
       </div>
       
     </nav>
@@ -471,5 +471,20 @@ var bubblePosition = [
   {x:0.689309506729439, y:-0.24179863673604363, r:0.1492006118716775},
   {x:-0.242329405962451, y:-0.9479300797306327, r:0.11698395831640035}
 ];
+
+var iconButtons = document.getElementsByClassName('icon button');
+for(var i=0; i < iconButtons.length; ++i){
+  iconButtons[i].addEventListener('click', function(e){
+    var shape = this.attributes['data-shape'].value;
+    console.log(shape);
+    for(var o=0; o < iconButtons.length; ++o){
+      iconButtons[o].className = 'icon button';
+      if(iconButtons[o].attributes['data-shape'].value == shape){
+        iconButtons[o].className += ' active';
+      }
+    }
+    setShape(shape);
+  });
+}
 </script>
 </html>

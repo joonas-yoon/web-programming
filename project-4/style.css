@@ -75,6 +75,9 @@ input[type=button], input[type=submit], button {
 .icon.button {
   padding: 3px !important;
 }
+.icon.button.active {
+  background-color: #DC3023 !important;
+}
 .button-group .button {
   float: left;
   margin-right: 7px;
