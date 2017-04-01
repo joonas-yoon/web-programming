@@ -80,5 +80,5 @@ input[type=button], input[type=submit], button {
   margin-right: 7px;
 }
 .button-group:after {
-  clear: both;
+  clear: right;
 }

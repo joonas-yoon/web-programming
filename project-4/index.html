@@ -9,8 +9,11 @@
   <div class="container">
     <nav class="left menu">
       <label>Brush Size</label>
-      <input type="number" class="input-control fluid" value="10" onchange="setSize(this)"/>
-      
+      <input type="range" min="1" max="200" class="input-control fluid" value="10" onchange="setSize(this)"/>
+      <br>
+      <label>Brush Opacity</label>
+      <input type="range" min="0" max="100"  class="input-control fluid" value="100" onchange="setOpacity(this)"/>
+      <br>
       <hr>
       
       <label>Change Color</label>
@@ -21,6 +24,7 @@
       <button class="fluid color-sample button" style="background:#F7CA18" onclick="changeColor('#F7CA18')">RIPE LEMON</button>
       <button class="fluid color-sample button" style="background:#26C281" onclick="changeColor('#26C281')">JUNGLE GREEN</button>
       <button class="fluid color-sample button" style="background:#FFFFFF" onclick="changeColor('#FFFFFF')">WHITE</button>
+
       <hr>
       
       <input type="button" class="default button fluid" value="clear" onclick="clearCanvas()"/>
@@ -29,16 +33,21 @@
       <div class="button-group">
         <button class="icon button" onclick="javascript:setShape('brush')"><img src="icons/brush.png"></button>
         <button class="icon button" onclick="javascript:setShape('colorPicker')"><img src="icons/picker.png"></button>
+        <button class="icon button" onclick="javascript:setShape('brush-bubble')"><img src="icons/brush_bubble.png"></button>
         <button class="icon button" onclick="javascript:setShape('line')"><img src="icons/line.png"></button>
-        <button class="icon button" onclick="javascript:setShape('rectangle')"><img src="icons/rectangle.png"></button>
-        <button class="icon button" onclick="javascript:setShape('rectangle-filled')"><img src="icons/rectangle_filled.png"></button>
         <button class="icon button" onclick="javascript:setShape('triangle')"><img src="icons/triangle.png"></button>
         <button class="icon button" onclick="javascript:setShape('triangle-filled')"><img src="icons/triangle_filled.png"></button>
+        <button class="icon button" onclick="javascript:setShape('rectangle')"><img src="icons/rectangle.png"></button>
+        <button class="icon button" onclick="javascript:setShape('rectangle-filled')"><img src="icons/rectangle_filled.png"></button>
+        <button class="icon button" onclick="javascript:setShape('pentagon')"><img src="icons/pentagon.png"></button>
+        <button class="icon button" onclick="javascript:setShape('pentagon-filled')"><img src="icons/pentagon_filled.png"></button>
+        <button class="icon button" onclick="javascript:setShape('hexagon')"><img src="icons/hexagon.png"></button>
+        <button class="icon button" onclick="javascript:setShape('hexagon-filled')"><img src="icons/hexagon_filled.png"></button>
+        <button class="icon button" onclick="javascript:setShape('octagon')"><img src="icons/octagon.png"></button>
+        <button class="icon button" onclick="javascript:setShape('octagon-filled')"><img src="icons/octagon_filled.png"></button>
         <button class="icon button" onclick="javascript:setShape('circle')"><img src="icons/circle.png"></button>
         <button class="icon button" onclick="javascript:setShape('circle-filled')"><img src="icons/circle_filled.png"></button>
       </div>
-      
-      <p></p>
       
     </nav>
     <div class="wrapper">
@@ -46,7 +55,7 @@
       <canvas id="canvas" width="860" height="640"></canvas>
     </div>
   </div>
-  <p> &nbsp;<b>Note:</b> type="color" is not supported in Internet Explorer 11 and earlier versions or Safari 9.1 and earlier versions.</p>
+  <p style="clear:both;"> &nbsp;<b>Note:</b> type="color" is not supported in Internet Explorer 11 and earlier versions or Safari 9.1 and earlier versions.</p>
 </body>
 <script type="text/javascript">
 
@@ -56,13 +65,6 @@ var realContext = realCanvas.getContext('2d');
 // 인터페이스를 위한 임시 캔버스
 var fakeCanvas = document.getElementById('cover');
 var fakeContext = fakeCanvas.getContext('2d');
-
-function Point(x, y, rad){
-  this.x = x;
-  this.y = y;
-  this.rad = rad;
-  this.color = '#000000';
-};
 
 var dragging = false;
 var pointQueue = new Array();
@@ -81,7 +83,18 @@ fakeCanvas.addEventListener('mousedown', function(evt){
   lastClickPosition.y = evt.pageY - this.offsetTop;
   
   if( drawType == 'brush' ){
-    pointQueue.push({x: lastClickPosition.x, y: lastClickPosition.y, dragging: false});
+    pointQueue.push({x: lastClickPosition.x, y: lastClickPosition.y, r:brush.thick/2, dragging: false});
+  }
+  else if( drawType == 'brush-bubble' ){
+    for(var i=0; i<bubblePosition.length; ++i){
+      var rad = brush.thick/2;
+      pointQueue.push({
+        x: lastClickPosition.x + rad*bubblePosition[i].x,
+        y: lastClickPosition.y + rad*bubblePosition[i].y,
+        r: rad * bubblePosition[i].r,
+        dragging: false
+      });
+    }
   }
   dragging = true;
   
@@ -99,6 +112,11 @@ fakeCanvas.addEventListener('mousemove', function(evt){
   var oldStrokeStyle = fakeContext.strokeStyle;
   var oldFillStyle = fakeContext.fillStyle;
   fakeContext.clearRect(0, 0, fakeContext.canvas.width, fakeContext.canvas.height);
+  
+  fakeContext.lineCap = "round";
+  fakeContext.lineJoin = "round";
+  
+  fakeContext.globalAlpha = brush.opacity;
   if( drawType == 'brush' ) {
     fakeContext.beginPath();
     fakeContext.arc(mouseX, mouseY, brush.thick/2, 0, 2*Math.PI);
@@ -109,6 +127,15 @@ fakeCanvas.addEventListener('mousemove', function(evt){
     }
     fakeContext.fill();
     fakeContext.closePath();
+  } else if( drawType == 'brush-bubble' ) {
+    for(var i=0; i<bubblePosition.length; ++i){
+      var rad = brush.thick/2;
+      fakeContext.beginPath();
+      fakeContext.arc(mouseX + rad*bubblePosition[i].x, mouseY + rad*bubblePosition[i].y, rad*bubblePosition[i].r, 0, 2*Math.PI);
+      fakeContext.fillStyle = brush.color;
+      fakeContext.fill();
+      fakeContext.closePath();
+    }
   } else if( drawType == 'rectangle' && dragging ) {
     fakeContext.beginPath();
     fakeContext.rect(lastClickPosition.x, lastClickPosition.y, mouseX - lastClickPosition.x, mouseY - lastClickPosition.y);
@@ -137,54 +164,63 @@ fakeCanvas.addEventListener('mousemove', function(evt){
     fakeContext.closePath();
     
     fakeContext.beginPath();
-    if(isOnlyStroke) fakeContext.strokeStyle = brush.color;
-    else             fakeContext.strokeStyle = 'rgba(255, 255, 255, .5)';
-    fakeContext.arc(centerX, centerY, brush.thick/2, 0, 2 * Math.PI);
+    fakeContext.strokeStyle = brush.color;
     fakeContext.fillStyle = brush.color;
     fakeContext.fill();
     fakeContext.closePath();
     fakeContext.beginPath();
     fakeContext.moveTo(centerX, centerY);
     fakeContext.lineTo(mouseX, mouseY);
-    // fakeContext.stroke();
     fakeContext.closePath();
   } else if( drawType.substr(0, 'triangle'.length) == 'triangle' && dragging ) {
     var triWidth = mouseX - lastClickPosition.x;
-    var isOnlyStroke = drawType === 'triangle';
-    var threePoint = [
+    var points = [
       {x:lastClickPosition.x + triWidth/2, y:lastClickPosition.y},
       {x:mouseX, y:mouseY},
       {x:mouseX - triWidth, y:mouseY}
     ];
-    fakeContext.beginPath();
-    if(isOnlyStroke) fakeContext.strokeStyle = brush.color;
-    else             fakeContext.fillStyle = brush.color;
-    fakeContext.moveTo(threePoint[0].x, threePoint[0].y);
-    fakeContext.lineTo(threePoint[1].x, threePoint[1].y);
-    fakeContext.lineTo(threePoint[2].x, threePoint[2].y);
-    fakeContext.lineTo(threePoint[0].x, threePoint[0].y);
-    if(isOnlyStroke) fakeContext.stroke();
-    else             fakeContext.fill();
-    fakeContext.closePath();
-    
-    if(isOnlyStroke){
-      fakeContext.fillStyle = brush.color;
-      for(var i in threePoint){
-        fakeContext.beginPath();
-        fakeContext.arc(threePoint[i].x, threePoint[i].y, brush.thick/2, 0, 2*Math.PI);
-        fakeContext.fill();
-        fakeContext.closePath();
-      }
-    }
+    drawWithPoints(fakeContext, points, drawType === 'triangle');
+  } else if( drawType.substr(0, 'pentagon'.length) == 'pentagon' && dragging ) {
+    var penWidth = mouseX - lastClickPosition.x;
+    var penHeight = mouseY - lastClickPosition.y;
+    var points = [
+      {x:lastClickPosition.x + penWidth/2, y:lastClickPosition.y},
+      {x:lastClickPosition.x, y:lastClickPosition.y + penHeight*3/8},
+      {x:lastClickPosition.x + penWidth/5, y:mouseY},
+      {x:mouseX - penWidth/5, y:mouseY},
+      {x:mouseX, y:lastClickPosition.y + penHeight*3/8}
+    ];
+    drawWithPoints(fakeContext, points, drawType === 'pentagon');
+  } else if( drawType.substr(0, 'hexagon'.length) == 'hexagon' && dragging ) {
+    var hexWidth = mouseX - lastClickPosition.x;
+    var hexHeight = mouseY - lastClickPosition.y;
+    var points = [
+      {x:lastClickPosition.x + hexWidth/4, y:lastClickPosition.y},
+      {x:lastClickPosition.x, y:lastClickPosition.y + hexHeight/2},
+      {x:lastClickPosition.x + hexWidth/4, y:lastClickPosition.y + hexHeight},
+      {x:lastClickPosition.x + hexWidth*3/4, y:lastClickPosition.y + hexHeight},
+      {x:lastClickPosition.x + hexWidth, y:lastClickPosition.y + hexHeight/2},
+      {x:lastClickPosition.x + hexWidth*3/4, y:lastClickPosition.y},
+    ];
+    drawWithPoints(fakeContext, points, drawType === 'hexagon');
+  } else if( drawType.substr(0, 'octagon'.length) == 'octagon' && dragging ) {
+    var octWidth = mouseX - lastClickPosition.x;
+    var octHeight = mouseY - lastClickPosition.y;
+    var isOnlyStroke = drawType === 'octagon';
+    var points = [
+      {x:lastClickPosition.x + octWidth/3, y:lastClickPosition.y},
+      {x:lastClickPosition.x, y:lastClickPosition.y + octHeight/3},
+      {x:lastClickPosition.x, y:lastClickPosition.y + octHeight*2/3},
+      {x:lastClickPosition.x + octWidth/3, y:lastClickPosition.y + octHeight},
+      {x:lastClickPosition.x + octWidth*2/3, y:lastClickPosition.y + octHeight},
+      {x:lastClickPosition.x + octWidth, y:lastClickPosition.y + octHeight*2/3},
+      {x:lastClickPosition.x + octWidth, y:lastClickPosition.y + octHeight/3},
+      {x:lastClickPosition.x + octWidth*2/3, y:lastClickPosition.y}
+    ];
+    drawWithPoints(fakeContext, points, drawType === 'octagon');
   } else if( drawType == 'line' ){
     fakeContext.beginPath();
     if( dragging ){
-      fakeContext.arc(lastClickPosition.x, lastClickPosition.y, brush.thick/2, 0, 2.0 * Math.PI, 0);
-      fakeContext.arc(mouseX, mouseY, brush.thick/2, 0, 2.0 * Math.PI, 0);
-      fakeContext.fillStyle = brush.color;
-      fakeContext.fill();
-      fakeContext.closePath();
-      
       fakeContext.beginPath();
       fakeContext.moveTo(lastClickPosition.x, lastClickPosition.y);
       fakeContext.lineTo(mouseX, mouseY);
@@ -192,7 +228,6 @@ fakeCanvas.addEventListener('mousemove', function(evt){
       fakeContext.stroke();
     } else {
       fakeContext.arc(mouseX, mouseY, brush.thick/2, 0, 2.0 * Math.PI, 0);
-      
       fakeContext.fillStyle = brush.color;
       fakeContext.fill();
     }
@@ -221,11 +256,15 @@ function draw(shape, startPosition, endPosition){
   realContext.strokeStyle = brush.color;
   realContext.fillStyle = brush.color;
   realContext.lineJoin = "round";
+  realContext.lineCap = "round";
   realContext.lineWidth = brush.thick;
+  
+  realContext.globalAlpha = brush.opacity;
 
-  if( !shape || shape == 'brush' ) {
+  if( !shape || shape.substr(0, 'brush'.length) == 'brush' ) {
     for(var i=0; i < pointQueue.length; ++i){
       realContext.beginPath();
+      realContext.lineWidth = pointQueue[i].r*2 || brush.thick;
       if( i-1 >= 0 && pointQueue[i].dragging ){
         realContext.moveTo(pointQueue[i-1].x, pointQueue[i-1].y);
       } else {
@@ -265,31 +304,52 @@ function draw(shape, startPosition, endPosition){
   }
   else if( drawType.substr(0, 'triangle'.length) == 'triangle' ) {
     var triWidth = endPosition.x - startPosition.x;
-    var isOnlyStroke = drawType === 'triangle';
-    var threePoint = [
+    var points = [
       {x:startPosition.x + triWidth/2, y:startPosition.y},
       {x:endPosition.x, y:endPosition.y},
       {x:endPosition.x - triWidth, y:endPosition.y}
     ];
-    realContext.beginPath();
-    if(isOnlyStroke) realContext.strokeStyle = brush.color;
-    else             realContext.fillStyle = brush.color;
-    realContext.moveTo(threePoint[0].x, threePoint[0].y);
-    realContext.lineTo(threePoint[1].x, threePoint[1].y);
-    realContext.lineTo(threePoint[2].x, threePoint[2].y);
-    realContext.lineTo(threePoint[0].x, threePoint[0].y);
-    if(isOnlyStroke) realContext.stroke();
-    else             realContext.fill();
-    realContext.closePath();
-    
-    if(isOnlyStroke){
-      for(var i in threePoint){
-        realContext.beginPath();
-        realContext.arc(threePoint[i].x, threePoint[i].y, brush.thick/2, 0, 2*Math.PI);
-        realContext.fill();
-        realContext.closePath();
-      }
-    }
+    drawWithPoints(realContext, points, drawType === 'triangle');
+  }
+  else if( drawType.substr(0, 'pentagon'.length) == 'pentagon' ) {
+    var penWidth = endPosition.x - startPosition.x;
+    var penHeight = endPosition.y - startPosition.y;
+    var points = [
+      {x:startPosition.x + penWidth/2, y:startPosition.y},
+      {x:startPosition.x, y:startPosition.y + penHeight*3/8},
+      {x:startPosition.x + penWidth/5, y:endPosition.y},
+      {x:endPosition.x - penWidth/5, y:endPosition.y},
+      {x:endPosition.x, y:startPosition.y + penHeight*3/8}
+    ];
+    drawWithPoints(realContext, points, drawType === 'pentagon');
+  }
+  else if( drawType.substr(0, 'hexagon'.length) == 'hexagon' ) {
+    var hexWidth = endPosition.x - startPosition.x;
+    var hexHeight = endPosition.y - startPosition.y;
+    var points = [
+      {x:startPosition.x + hexWidth/4, y:startPosition.y},
+      {x:startPosition.x, y:startPosition.y + hexHeight/2},
+      {x:startPosition.x + hexWidth/4, y:startPosition.y + hexHeight},
+      {x:startPosition.x + hexWidth*3/4, y:startPosition.y + hexHeight},
+      {x:startPosition.x + hexWidth, y:startPosition.y + hexHeight/2},
+      {x:startPosition.x + hexWidth*3/4, y:startPosition.y},
+    ];
+    drawWithPoints(realContext, points, drawType === 'hexagon');
+  }
+  else if( drawType.substr(0, 'octagon'.length) == 'octagon' ) {
+    var octWidth = endPosition.x - startPosition.x;
+    var octHeight = endPosition.y - startPosition.y;
+    var points = [
+      {x:startPosition.x + octWidth/3, y:startPosition.y},
+      {x:startPosition.x, y:startPosition.y + octHeight/3},
+      {x:startPosition.x, y:startPosition.y + octHeight*2/3},
+      {x:startPosition.x + octWidth/3, y:startPosition.y + octHeight},
+      {x:startPosition.x + octWidth*2/3, y:startPosition.y + octHeight},
+      {x:startPosition.x + octWidth, y:startPosition.y + octHeight*2/3},
+      {x:startPosition.x + octWidth, y:startPosition.y + octHeight/3},
+      {x:startPosition.x + octWidth*2/3, y:startPosition.y}
+    ];
+    drawWithPoints(realContext, points, drawType === 'octagon');
   }
   else if( shape == 'line' ) {
     realContext.arc(startPosition.x, startPosition.y, brush.thick/2, 0, 2.0 * Math.PI, 0);
@@ -303,13 +363,25 @@ function draw(shape, startPosition, endPosition){
 }
 
 function addDrawPoint(evt){
-  if( drawType == 'brush' ){
-    if( dragging ){
+  if( drawType == 'brush' && dragging ){
+    var mouseX = evt.pageX - this.offsetLeft;
+    var mouseY = evt.pageY - this.offsetTop;
+    pointQueue.push({x: mouseX, y: mouseY, dragging: true});
+    draw();
+  }
+  else if( drawType == 'brush-bubble' && dragging ){
+    for(var i=0; i<bubblePosition.length; ++i){
+      var rad = brush.thick/2;
       var mouseX = evt.pageX - this.offsetLeft;
       var mouseY = evt.pageY - this.offsetTop;
-      pointQueue.push({x: mouseX, y: mouseY, dragging: true});
-      draw();
+      pointQueue.push({
+        x: mouseX + rad*bubblePosition[i].x,
+        y: mouseY + rad*bubblePosition[i].y,
+        r: rad * bubblePosition[i].r,
+        dragging: false
+      });
     }
+    draw();
   }
 }
 
@@ -328,7 +400,7 @@ function looseFocus(evt){
   cachedImage = realContext.getImageData(0, 0, realContext.canvas.width, realContext.canvas.height);
   pointQueue = [];
   
-  realCanvas.removeEventListener('mousemove', addDrawPoint);
+  fakeCanvas.removeEventListener('mousemove', addDrawPoint);
   fakeContext.clearRect(0, 0, fakeContext.canvas.width, fakeContext.canvas.height);
 }
 
@@ -349,6 +421,9 @@ function setSize(input){
 function setShape(shape){
   drawType = shape;
 }
+function setOpacity(input){
+  brush.opacity = parseInt(input.value) / 100.0;
+}
 
 function rgbToHex(R,G,B) {return toHex(R)+toHex(G)+toHex(B)}
 function toHex(n) {
@@ -363,5 +438,38 @@ function exportImageToPng() {
   var w = window.open('about:blank','image from canvas');
   w.document.write("<img src='"+d+"' alt='from canvas'/>");
 }
+
+function drawWithPoints(context, points, isStroke){
+  context.beginPath();
+  if(isStroke) context.strokeStyle = brush.color;
+  else         context.fillStyle = brush.color;
+  context.moveTo(points[0].x, points[0].y);
+  for(var i=1; i<=points.length; ++i){
+    context.lineTo(points[i%points.length].x, points[i%points.length].y);
+  }
+  if(isStroke) context.stroke();
+  else         context.fill();
+  context.closePath();
+}
+
+var bubblePosition = [
+  {x:0.2619801461246678, y:-0.00548642834101587, r:0.05343442098278533},
+  {x:0.1254768260044643, y:-0.7078847076515622, r:0.10014724955128129},
+  {x:0.4764706207344984, y:0.6782679395668096, r:0.09464330839643442},
+  {x:0.3053881984688669, y:-0.06008640099848295, r:0.08123258198007388},
+  {x:-0.6593928483339435, y:0.3865993498817919, r:0.09014343251110375},
+  {x:0.47955175062905875, y:0.2938665168967276, r:0.125162131725303},
+  {x:-0.04888078369161075, y:-0.039991675344235755, r:0.1375524536698082},
+  {x:0.38269971001561087, y:-0.3663534559340573, r:0.06439184815336155},
+  {x:0.08510828240797652, y:-0.6530872627852617, r:0.13517295367470605},
+  {x:-0.14929593595254564, y:-0.18851616985225528, r:0.06689965902756581},
+  {x:0.0972151459714965, y:0.0006678690498356232, r:0.09117171350470743},
+  {x:0.7728149398926321, y:0.4824093690857594, r:0.14907356088031498},
+  {x:-0.5019011463274539, y:0.6733509108334532, r:0.12518029597350494},
+  {x:-0.6028044922428828, y:-0.11983764146035236, r:0.1394441707995615},
+  {x:-0.31996540257804407, y:-0.2717698454216193, r:0.08424342735636092},
+  {x:0.689309506729439, y:-0.24179863673604363, r:0.1492006118716775},
+  {x:-0.242329405962451, y:-0.9479300797306327, r:0.11698395831640035}
+];
 </script>
 </html>
