@@ -14,6 +14,13 @@
       <label>Brush Opacity</label>
       <input type="range" min="0" max="100"  class="input-control fluid" value="100" onchange="setOpacity(this)"/>
       <br>
+      <label>Text</label>
+      <input type="text" class="input-control fluid" value="" placeholder="Text..." id="textValue"/>
+      <br>
+      <input type="number" class="input-control" value="430" placeholder="x" id="textX" style="display:inline-block; width: 30%;"/>
+      <input type="number" class="input-control" value="320" placeholder="y" id="textY" style="display:inline-block; width: 30%;"/>
+      <button class="input-control" onclick="pushText()"  style="display:inline-block; width: 30%; height: 30px;"/>PUSH</button>
+      <br>
       <hr>
       
       <label>Change Color</label>
@@ -485,6 +492,13 @@ for(var i=0; i < iconButtons.length; ++i){
     }
     setShape(shape);
   });
+}
+
+function pushText(){
+  var text = document.getElementById('textValue').value;
+  var x = document.getElementById('textX').value, y = document.getElementById('textY').value;
+  realContext.font = "40px Arial";
+  realContext.fillText(text, x, y);
 }
 </script>
 </html>
